@@ -14,16 +14,48 @@ fun main(args: Array<String>) {
     val filename = args[1]
 
     if (command != "tokenize") {
-        System.err.println("Unknown command: ${command}")
+        System.err.println("Unknown command: $command")
         exitProcess(1)
     }
 
     val fileContents = File(filename).readText()
 
-    // TODO: Uncomment the code below to pass the first stage
-     if (fileContents.isNotEmpty()) {
-         throw NotImplementedError("Scanner not implemented")
-     } else {
-         println("EOF  null") // Placeholder, replace this line when implementing the scanner
-     }
+    if (fileContents.isNotEmpty()) {
+        parse(fileContents)
+    } else {
+        println("EOF  null")
+    }
+}
+
+fun parse(text: String) {
+    text.split(' ').map { LoxToken.fromString(it) }
+        .forEach { println(it) }
+    println("EOF  null")
+}
+
+
+enum class LoxToken(val value: String) {
+    LEFT_PAREN("("),
+    RIGHT_PAREN(")"),
+    LEFT_BRACE("{"),
+    RIGHT_BRACE("}"),
+    COMMA(","),
+    DOT("."),
+    MINUS("-"),
+    PLUS("+"),
+    SEMICOLON(";"),
+    SLASH("/"),
+    STAR("*"),
+    BANG("!"),
+    EOF("");
+
+    override fun toString(): String {
+        return "${this.name} ${this.value} null"
+    }
+
+    companion object {
+        fun fromString(str: String): LoxToken? {
+            return entries.find { it.value == str }
+        }
+    }
 }
