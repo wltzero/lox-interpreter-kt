@@ -44,6 +44,8 @@ class Token(val name: String, val matcher: TokenMatcher) {
 
 private val eof = Token("EOF", EofMatcher())
 private val tokens = listOf(
+    Token("COMMENT", "//.*"),
+    Token("SLASH", '/'),
     Token("LESS_EQUAL", "<="),
     Token("GREATER_EQUAL", ">="),
     Token("LESS", "<"),
@@ -73,8 +75,8 @@ sealed class ParsedToken {
 
 fun parseContent(text: String): List<ParsedToken> {
     var pos = 0
-    var result = mutableListOf<ParsedToken>()
-    var line = 1
+    val result = mutableListOf<ParsedToken>()
+    val line = 1
 
     while (pos < text.length) {
         // 找到下一个符合规则的token
@@ -84,7 +86,9 @@ fun parseContent(text: String): List<ParsedToken> {
                 result.add(ParsedToken.UnexpectedChar(line, text[pos]))
                 pos++
             }
-
+            match.first.name=="COMMENT" ->{
+                pos += match.second
+            }
             else -> {
                 val (token, matchedLength) = match
                 // 前进matchedLength个字符
