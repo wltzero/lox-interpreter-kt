@@ -44,9 +44,11 @@ class Token(val name: String, val matcher: TokenMatcher) {
 
 private val eof = Token("EOF", EofMatcher())
 private val tokens = listOf(
+    Token("BANG_EQUAL", "!="),
+    Token("BANG", "!"),
     Token("EQUAL_EQUAL", "=="),
-    Token("COMMA", ','),
     Token("EQUAL", '='),
+    Token("COMMA", ','),
     Token("DOT", '.'),
     Token("MINUS", '-'),
     Token("PLUS", '+'),
