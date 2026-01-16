@@ -28,7 +28,7 @@ fun main(args: Array<String>) {
 }
 
 fun parse(text: String) {
-    text.split(' ').map { LoxToken.fromString(it) }
+    text.map { LoxToken.fromString(it.toString()) }
         .forEach { println(it) }
     println("EOF  null")
 }
