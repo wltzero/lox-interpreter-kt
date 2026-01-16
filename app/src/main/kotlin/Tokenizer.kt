@@ -78,7 +78,7 @@ sealed class ParsedToken {
 fun parseContent(text: String): List<ParsedToken> {
     var pos = 0
     val result = mutableListOf<ParsedToken>()
-    val line = 1
+    var line = 1
 
     while (pos < text.length) {
         // 找到下一个符合规则的token
@@ -88,8 +88,12 @@ fun parseContent(text: String): List<ParsedToken> {
                 result.add(ParsedToken.UnexpectedChar(line, text[pos]))
                 pos++
             }
-            match.first.name=="COMMENT" || match.first.name=="SPACES" || match.first.name=="NEWLINES" ->{
+            match.first.name=="COMMENT" || match.first.name=="SPACES" ->{
                 pos += match.second
+            }
+            match.first.name=="NEWLINES" ->{
+                pos += match.second
+                line++
             }
             else -> {
                 val (token, matchedLength) = match
