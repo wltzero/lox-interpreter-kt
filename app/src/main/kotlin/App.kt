@@ -13,42 +13,24 @@ fun main(args: Array<String>) {
     val command = args[0]
     val filename = args[1]
 
-    if (command != "tokenize") {
-        System.err.println("Unknown command: $command")
-        exitProcess(1)
-    }
+    when (command) {
+        "tokenize" -> {
+            val fileContents = File(filename).readText()
+            val tokens = parseContent(fileContents)
+            for (t in tokens) {
+                when (t) {
+                    is ParsedToken.MatchedToken -> println("${t.t.name} ${t.match} null")
+                    is ParsedToken.UnexpectedChar -> System.err.println("[line ${t.line}] Error: Unexpected character: ${t.ch}")
+                }
+            }
 
-    val fileContents = File(filename).readText()
-
-    if (fileContents.isNotEmpty()) {
-        parse(fileContents)
-    } else {
-        println("EOF  null")
-    }
-}
-
-fun parse(text: String) = text.lineSequence().forEachIndexed { i, line ->
-    line.forEach { char ->
-        println(LoxToken.fromString(char.toString()))
-    }
-}.also { println("EOF  null") }
-
-
-enum class LoxToken(val value: String) {
-    LEFT_PAREN("("), RIGHT_PAREN(")"), LEFT_BRACE("{"), RIGHT_BRACE("}"), COMMA(","), DOT("."), MINUS("-"), PLUS("+"), SEMICOLON(";"), SLASH("/"), STAR("*"), BANG("!"), EOF("");
-
-    override fun toString(): String {
-        return "${this.name} ${this.value} null"
-    }
-
-    companion object {
-        fun fromString(str: String, line: Int = -1): LoxToken {
-            return entries.find { it.value == str } ?: throw InvalidTokenException("LoxOperator", str, line)
+            if (tokens.any { it is ParsedToken.UnexpectedChar }) {
+                exitProcess(65)
+            }
+        }
+        else -> {
+            System.err.println("Unknown command: ${command}")
+            exitProcess(1)
         }
     }
-
 }
-
-class InvalidTokenException(
-    message: String, val value: String, val line: Int = -1
-) : Exception("[line $line] Error: Unexpected character: $value")
