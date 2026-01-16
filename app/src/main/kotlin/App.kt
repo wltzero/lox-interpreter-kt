@@ -27,35 +27,30 @@ fun main(args: Array<String>) {
     }
 }
 
-fun parse(text: String) {
-    text.map { LoxToken.fromString(it.toString()) }
-        .forEach { println(it) }
-    println("EOF  null")
-}
+fun parse(text: String) = text.lineSequence().forEachIndexed { i, line ->
+    line.forEach { char ->
+        runCatching { LoxToken.fromString(char.toString()) }
+            .onSuccess(::println)
+            .onFailure { println("[line ${i + 1}] Error: Unexpected character: $char") }
+    }
+}.also { println("EOF  null") }
 
 
 enum class LoxToken(val value: String) {
-    LEFT_PAREN("("),
-    RIGHT_PAREN(")"),
-    LEFT_BRACE("{"),
-    RIGHT_BRACE("}"),
-    COMMA(","),
-    DOT("."),
-    MINUS("-"),
-    PLUS("+"),
-    SEMICOLON(";"),
-    SLASH("/"),
-    STAR("*"),
-    BANG("!"),
-    EOF("");
+    LEFT_PAREN("("), RIGHT_PAREN(")"), LEFT_BRACE("{"), RIGHT_BRACE("}"), COMMA(","), DOT("."), MINUS("-"), PLUS("+"), SEMICOLON(";"), SLASH("/"), STAR("*"), BANG("!"), EOF("");
 
     override fun toString(): String {
         return "${this.name} ${this.value} null"
     }
 
     companion object {
-        fun fromString(str: String): LoxToken? {
-            return entries.find { it.value == str }
+        fun fromString(str: String): LoxToken {
+            return entries.find { it.value == str } ?: throw InvalidTokenException("Unknown token: $str")
         }
     }
+
 }
+
+class InvalidTokenException(
+    message: String
+) : Exception()
