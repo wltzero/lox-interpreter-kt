@@ -29,9 +29,7 @@ fun main(args: Array<String>) {
 
 fun parse(text: String) = text.lineSequence().forEachIndexed { i, line ->
     line.forEach { char ->
-        runCatching { LoxToken.fromString(char.toString()) }
-            .onSuccess(::println)
-            .onFailure { println("[line ${i + 1}] Error: Unexpected character: $char") }
+        println(LoxToken.fromString(char.toString()))
     }
 }.also { println("EOF  null") }
 
@@ -44,13 +42,13 @@ enum class LoxToken(val value: String) {
     }
 
     companion object {
-        fun fromString(str: String): LoxToken {
-            return entries.find { it.value == str } ?: throw InvalidTokenException("Unknown token: $str")
+        fun fromString(str: String, line: Int = -1): LoxToken {
+            return entries.find { it.value == str } ?: throw InvalidTokenException("LoxOperator", str, line)
         }
     }
 
 }
 
 class InvalidTokenException(
-    message: String
-) : Exception()
+    message: String, val value: String, val line: Int = -1
+) : Exception("[line $line] Error: Unexpected character: $value")
