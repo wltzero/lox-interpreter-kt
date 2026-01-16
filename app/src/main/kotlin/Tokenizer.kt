@@ -62,8 +62,8 @@ fun parseContent(text: String): List<ParsedToken> {
         when {
             matches.size > 1 -> throw RuntimeException("founded multiple matches")
             matches.isEmpty() -> {
-                pos++
                 result.add(ParsedToken.UnexpectedChar(line, text[pos]))
+                pos++
             }
 
             else -> {
