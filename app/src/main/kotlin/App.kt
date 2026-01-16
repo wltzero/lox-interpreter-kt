@@ -21,9 +21,9 @@ fun main(args: Array<String>) {
     val fileContents = File(filename).readText()
 
     // TODO: Uncomment the code below to pass the first stage
-    // if (fileContents.isNotEmpty()) {
-    //     throw NotImplementedError("Scanner not implemented")
-    // } else {
-    //     println("EOF  null") // Placeholder, replace this line when implementing the scanner
-    // }
+     if (fileContents.isNotEmpty()) {
+         throw NotImplementedError("Scanner not implemented")
+     } else {
+         println("EOF  null") // Placeholder, replace this line when implementing the scanner
+     }
 }
