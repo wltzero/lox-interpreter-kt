@@ -45,6 +45,8 @@ class Token(val name: String, val matcher: TokenMatcher) {
 private val eof = Token("EOF", EofMatcher())
 private val tokens = listOf(
     Token("COMMENT", "//.*"),
+    Token("SPACES", "[ \t]+"),
+    Token("NEWLINES", "[\r?\n]+"),
     Token("SLASH", '/'),
     Token("LESS_EQUAL", "<="),
     Token("GREATER_EQUAL", ">="),
@@ -86,7 +88,7 @@ fun parseContent(text: String): List<ParsedToken> {
                 result.add(ParsedToken.UnexpectedChar(line, text[pos]))
                 pos++
             }
-            match.first.name=="COMMENT" ->{
+            match.first.name=="COMMENT" || match.first.name=="SPACES" || match.first.name=="NEWLINES" ->{
                 pos += match.second
             }
             else -> {
