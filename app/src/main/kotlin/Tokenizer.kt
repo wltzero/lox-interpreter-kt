@@ -2,11 +2,11 @@ sealed class TokenMatcher {
     abstract fun match(t: String, start: Int): Int?
 }
 
-class RegexMatcher(val regex: Regex) : TokenMatcher() {
+class RegexMatcher(val regex: Regex): TokenMatcher() {
     override fun match(t: String, start: Int): Int? {
         val matchResult = regex.find(t, start)
         return if (matchResult != null && matchResult.range.first == start) {
-            matchResult.range.last - matchResult.range.first
+            matchResult.range.last - matchResult.range.first + 1
         } else {
             null
         }
@@ -34,7 +34,8 @@ class EofMatcher : TokenMatcher() {
 }
 
 class Token(val name: String, val matcher: TokenMatcher) {
-    constructor(name: String, ch: Char) : this(name, CharMatcher(ch))
+    constructor(name: String, ch: Char): this(name, CharMatcher(ch))
+    constructor(name: String, s: String): this(name, RegexMatcher(Regex(s)))
 
     override fun toString(): String {
         return name
@@ -43,7 +44,20 @@ class Token(val name: String, val matcher: TokenMatcher) {
 
 private val eof = Token("EOF", EofMatcher())
 private val tokens = listOf(
-    Token("COMMA", ','), Token("DOT", '.'), Token("MINUS", '-'), Token("PLUS", '+'), Token("SEMICOLON", ';'), Token("SLASH", '/'), Token("STAR", '*'), Token("LEFT_PAREN", '('), Token("RIGHT_PAREN", ')'), Token("LEFT_BRACE", '{'), Token("RIGHT_BRACE", '}'), eof
+    Token("EQUAL_EQUAL", "=="),
+    Token("COMMA", ','),
+    Token("EQUAL", '='),
+    Token("DOT", '.'),
+    Token("MINUS", '-'),
+    Token("PLUS", '+'),
+    Token("SEMICOLON", ';'),
+    Token("SLASH", '/'),
+    Token("STAR", '*'),
+    Token("LEFT_PAREN", '('),
+    Token("RIGHT_PAREN", ')'),
+    Token("LEFT_BRACE", '{'),
+    Token("RIGHT_BRACE", '}'),
+    eof
 )
 
 sealed class ParsedToken {
@@ -58,16 +72,15 @@ fun parseContent(text: String): List<ParsedToken> {
 
     while (pos < text.length) {
         // 找到下一个符合规则的token
-        val matches = tokens.mapNotNull { token -> token.matcher.match(text, pos)?.let { token to it } }
+        val match = tokens.firstNotNullOfOrNull { token -> token.matcher.match(text, pos)?.let { token to it } }
         when {
-            matches.size > 1 -> throw RuntimeException("founded multiple matches")
-            matches.isEmpty() -> {
+            match == null -> {
                 result.add(ParsedToken.UnexpectedChar(line, text[pos]))
                 pos++
             }
 
             else -> {
-                val (token, matchedLength) = matches[0]
+                val (token, matchedLength) = match
                 // 前进matchedLength个字符
                 result.add(ParsedToken.MatchedToken(token, text.substring(pos, pos + matchedLength)))
                 pos += matchedLength
