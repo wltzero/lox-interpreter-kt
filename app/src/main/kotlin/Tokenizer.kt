@@ -45,6 +45,8 @@ class Token(val name: String, val matcher: TokenMatcher) {
 private val eof = Token("EOF", EofMatcher())
 private val tokens = listOf(
     Token("COMMENT", "//.*"),
+    Token("STRING", "\"([^\"\\\\]|\\\\.)*\""),
+    Token("STRING_UNTERMINATED", "\"([^\"\\\\]|\\\\.)*"),
     Token("SPACES", "[ \t]+"),
     Token("NEWLINES", "[\r?\n]+"),
     Token("SLASH", '/'),
@@ -71,8 +73,10 @@ private val tokens = listOf(
 )
 
 sealed class ParsedToken {
-    class MatchedToken(val t: Token, val match: String) : ParsedToken()
+    class MatchedSimpleToken(val t: Token, val match: String) : ParsedToken()
+    class MatchedStringToken(val t: Token, val match: String, val literal: String) : ParsedToken()
     class UnexpectedChar(val line: Int, val ch: Char) : ParsedToken()
+    class UnterminatedString(val line: Int): ParsedToken()
 }
 
 fun parseContent(text: String): List<ParsedToken> {
@@ -95,14 +99,22 @@ fun parseContent(text: String): List<ParsedToken> {
                 pos += match.second
                 line++
             }
+            match.first.name=="STRING" ->{
+                result.add(ParsedToken.MatchedStringToken(match.first, text.substring(pos, pos + match.second), text.substring(pos, pos + match.second).removeSurrounding("\"")))
+                pos += match.second
+            }
+            match.first.name=="STRING_UNTERMINATED" ->{
+                result.add(ParsedToken.UnterminatedString(line))
+                pos += match.second
+            }
             else -> {
                 val (token, matchedLength) = match
                 // 前进matchedLength个字符
-                result.add(ParsedToken.MatchedToken(token, text.substring(pos, pos + matchedLength)))
+                result.add(ParsedToken.MatchedSimpleToken(token, text.substring(pos, pos + matchedLength)))
                 pos += matchedLength
             }
         }
     }
-    result.add(ParsedToken.MatchedToken(eof,""))
+    result.add(ParsedToken.MatchedSimpleToken(eof,""))
     return result
 }
