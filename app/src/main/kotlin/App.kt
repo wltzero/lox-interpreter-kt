@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
                 }
             }
 
-            if (tokens.any { it is ParsedToken.UnexpectedChar }) {
+            if (tokens.any { it is ParsedToken.UnexpectedChar } || tokens.any { it is ParsedToken.UnterminatedString }) {
                 exitProcess(65)
             }
         }
