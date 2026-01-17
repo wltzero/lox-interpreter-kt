@@ -22,7 +22,7 @@ fun main(args: Array<String>) {
                     is ParsedToken.MatchedSimpleToken -> println("${t.t.name} ${t.match} null")
                     is ParsedToken.MatchedStringToken -> println("${t.t.name} ${t.match} ${t.literal}")
                     is ParsedToken.UnexpectedChar -> System.err.println("[line ${t.line}] Error: Unexpected character: ${t.ch}")
-                    is ParsedToken.UnterminatedString -> System.err.println("[line ${t.line}] Error: Unterminated string")
+                    is ParsedToken.UnterminatedString -> System.err.println("[line ${t.line}] Error: Unterminated string.")
                 }
             }
 
