@@ -49,7 +49,6 @@ private val tokens = listOf(
     Token("STRING_UNTERMINATED", "\"([^\"\\\\]|\\\\.)*"),
     Token("NUMBER", "\\d+(\\.\\d+)?"),
 
-    Token("IDENTIFIER", "[a-zA-Z_][a-zA-Z0-9_]*"),
     Token("AND", "and"),
     Token("CLASS", "class"),
     Token("ELSE", "else"),
@@ -66,6 +65,7 @@ private val tokens = listOf(
     Token("TRUE", "true"),
     Token("VAR", "var"),
     Token("WHILE", "while"),
+    Token("IDENTIFIER", "[a-zA-Z_][a-zA-Z0-9_]*"),
 
     Token("SPACES", "[ \t]+"),
     Token("NEWLINES", "[\r?\n]+"),
