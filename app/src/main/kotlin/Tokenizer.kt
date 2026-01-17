@@ -47,6 +47,7 @@ private val tokens = listOf(
     Token("COMMENT", "//.*"),
     Token("STRING", "\"([^\"\\\\]|\\\\.)*\""),
     Token("STRING_UNTERMINATED", "\"([^\"\\\\]|\\\\.)*"),
+    Token("NUMBER", "\\d+(\\.\\d+)?"),
     Token("SPACES", "[ \t]+"),
     Token("NEWLINES", "[\r?\n]+"),
     Token("SLASH", '/'),
@@ -74,7 +75,7 @@ private val tokens = listOf(
 
 sealed class ParsedToken {
     class MatchedSimpleToken(val t: Token, val match: String) : ParsedToken()
-    class MatchedStringToken(val t: Token, val match: String, val literal: String) : ParsedToken()
+    class MatchedVariableToken(val t: Token, val match: String, val literal: Any) : ParsedToken()
     class UnexpectedChar(val line: Int, val ch: Char) : ParsedToken()
     class UnterminatedString(val line: Int): ParsedToken()
 }
@@ -99,8 +100,12 @@ fun parseContent(text: String): List<ParsedToken> {
                 pos += match.second
                 line++
             }
+            match.first.name=="NUMBER" ->{
+                result.add(ParsedToken.MatchedVariableToken(match.first, text.substring(pos, pos + match.second), text.substring(pos, pos + match.second).toDouble()))
+                pos += match.second
+            }
             match.first.name=="STRING" ->{
-                result.add(ParsedToken.MatchedStringToken(match.first, text.substring(pos, pos + match.second), text.substring(pos, pos + match.second).removeSurrounding("\"")))
+                result.add(ParsedToken.MatchedVariableToken(match.first, text.substring(pos, pos + match.second), text.substring(pos, pos + match.second).removeSurrounding("\"")))
                 pos += match.second
             }
             match.first.name=="STRING_UNTERMINATED" ->{

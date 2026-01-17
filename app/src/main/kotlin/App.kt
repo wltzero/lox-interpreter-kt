@@ -2,8 +2,6 @@ import java.io.File
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    System.err.println("Logs from your program will appear here!")
 
     if (args.size < 2) {
         System.err.println("Usage: ./your_program.sh tokenize <filename>")
@@ -20,7 +18,7 @@ fun main(args: Array<String>) {
             for (t in tokens) {
                 when (t) {
                     is ParsedToken.MatchedSimpleToken -> println("${t.t.name} ${t.match} null")
-                    is ParsedToken.MatchedStringToken -> println("${t.t.name} ${t.match} ${t.literal}")
+                    is ParsedToken.MatchedVariableToken -> println("${t.t.name} ${t.match} ${t.literal}")
                     is ParsedToken.UnexpectedChar -> System.err.println("[line ${t.line}] Error: Unexpected character: ${t.ch}")
                     is ParsedToken.UnterminatedString -> System.err.println("[line ${t.line}] Error: Unterminated string.")
                 }
