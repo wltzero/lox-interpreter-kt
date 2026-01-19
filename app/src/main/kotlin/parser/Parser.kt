@@ -31,7 +31,7 @@ sealed class ASTNode{
                     writer.print("${prefix})")
                 }
                 is GroupingExp -> {
-                    writer.print("${prefix}(group ")
+                    writer.print("${prefix}(group")
                     printAst(node.expression, writer, indent + 1)
                     writer.print("${prefix})")
                 }
