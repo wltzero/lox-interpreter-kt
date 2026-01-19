@@ -23,7 +23,7 @@ sealed class ASTNode{
                     writer.print("${prefix}(${node.op.symbol}")
                     printAst(node.left, writer, 1)
                     printAst(node.right, writer, 1)
-                    writer.print("${prefix})")
+                    writer.print(")")
                 }
                 is UnaryExp -> {
                     writer.print("${prefix}(${node.op.symbol}")
