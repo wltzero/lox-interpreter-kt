@@ -39,7 +39,7 @@ sealed class ASTNode{
                     writer.print("${prefix}${node.identifier}")
                 }
                 is StringLiteral -> {
-                    writer.print("${prefix}\"${node.string}\"")
+                    writer.print("${prefix}${node.string}")
                 }
                 is BooleanLiteral -> {
                     writer.print("${prefix}${node.value}")
