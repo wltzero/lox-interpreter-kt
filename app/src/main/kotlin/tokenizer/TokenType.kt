@@ -41,6 +41,7 @@ enum class TokenType(val symbol: String? = null) {
     MINUS("-"),                         // 减号 -
     PLUS("+"),                          // 加号 +
     STAR("*"),                          // 乘号 *
+    MOD("%"),                           // 乘号 *
     LEFT_PAREN("("),                    // 左括号 (
     RIGHT_PAREN(")"),                   // 右括号 )
     LEFT_BRACKET("["),                  // 左方括号 [

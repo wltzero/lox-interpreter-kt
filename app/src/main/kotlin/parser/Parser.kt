@@ -69,24 +69,8 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
         TokenType.PLUS to 5,
         TokenType.MINUS to 5,
         TokenType.STAR to 6,
-        TokenType.SLASH to 6
-    )
-    
-    // 运算符名称映射
-    private val operatorNames = mapOf(
-        TokenType.OR to "or",
-        TokenType.AND to "and",
-        TokenType.EQUAL_EQUAL to "equal",
-        TokenType.BANG_EQUAL to "not_equal",
-        TokenType.LESS to "less",
-        TokenType.LESS_EQUAL to "less_equal",
-        TokenType.GREATER to "greater",
-        TokenType.GREATER_EQUAL to "greater_equal",
-        TokenType.PLUS to "plus",
-        TokenType.MINUS to "minus",
-        TokenType.STAR to "mul",
-        TokenType.SLASH to "div",
-        TokenType.BANG to "bang"
+        TokenType.SLASH to 6,
+        TokenType.MOD to 6
     )
     
     fun parseExpr(): ASTNode {
