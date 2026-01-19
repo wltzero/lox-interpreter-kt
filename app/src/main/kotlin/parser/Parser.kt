@@ -173,7 +173,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
             }
             TokenType.STRING -> {
                 iter.moveNext()
-                ASTNode.StringLiteral(stringValue)
+                ASTNode.StringLiteral(stringValue.removeSurrounding("\""))
             }
             TokenType.IDENTIFIER -> {
                 iter.moveNext()
