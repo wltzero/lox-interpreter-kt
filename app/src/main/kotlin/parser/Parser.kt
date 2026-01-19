@@ -6,8 +6,8 @@ import tokenizer.TokenType
 
 
 sealed class ASTNode{
-    class BinaryExp(val op: String, val left: ASTNode, val right: ASTNode): ASTNode()
-    class UnaryExp(val op: String, val operand: ASTNode): ASTNode()
+    class BinaryExp(val op: TokenType, val left: ASTNode, val right: ASTNode): ASTNode()
+    class UnaryExp(val op: TokenType, val operand: ASTNode): ASTNode()
     class GroupingExp(val expression: ASTNode): ASTNode()
     class IdentifierExp(val identifier: String): ASTNode()
     class StringLiteral(val string: String): ASTNode()
@@ -17,38 +17,38 @@ sealed class ASTNode{
     
     companion object {
         fun printAst(node: ASTNode, writer: java.io.PrintWriter, indent: Int = 0) {
-            val prefix = "  ".repeat(indent)
+            val prefix = " ".repeat(indent)
             when (node) {
                 is BinaryExp -> {
-                    writer.println("${prefix}(${node.op}")
+                    writer.print("${prefix}(${node.op.symbol}")
                     printAst(node.left, writer, indent + 1)
                     printAst(node.right, writer, indent + 1)
-                    writer.println("${prefix})")
+                    writer.print("${prefix})")
                 }
                 is UnaryExp -> {
-                    writer.println("${prefix}(${node.op}")
+                    writer.print("${prefix}(${node.op.symbol} ")
                     printAst(node.operand, writer, indent + 1)
-                    writer.println("${prefix})")
+                    writer.print("${prefix})")
                 }
                 is GroupingExp -> {
-                    writer.println("${prefix}(group")
+                    writer.print("${prefix}(group ")
                     printAst(node.expression, writer, indent + 1)
-                    writer.println("${prefix})")
+                    writer.print("${prefix})")
                 }
                 is IdentifierExp -> {
-                    writer.println("${prefix}${node.identifier}")
+                    writer.print("${prefix}${node.identifier}")
                 }
                 is StringLiteral -> {
-                    writer.println("${prefix}\"${node.string}\"")
+                    writer.print("${prefix}\"${node.string}\"")
                 }
                 is BooleanLiteral -> {
-                    writer.println("${prefix}${node.value}")
+                    writer.print("${prefix}${node.value}")
                 }
                 is NilLiteral -> {
-                    writer.println("${prefix}nil")
+                    writer.print("${prefix}nil")
                 }
                 is NumberExp -> {
-                    writer.println("${prefix}${node.number}")
+                    writer.print("${prefix}${node.number}")
                 }
             }
         }
@@ -93,12 +93,20 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
         return parsePrecedence(0)
     }
     
+    // 栈元素数据类，用于保存解析状态
+    private data class ParseFrame(
+        val left: ASTNode,
+        val operator: TokenType,
+        val minPrecedence: Int
+    )
+    
     /**
-     * 处理二元运算符
+     * 使用栈实现的Pratt解析器
      * @param minPrecedence 当前允许的最小优先级
      */
     private fun parsePrecedence(minPrecedence: Int): ASTNode {
-        var left = parsePrefix()
+        val stack = mutableListOf<ParseFrame>()
+        var current = parsePrefix()
         
         while (true) {
             // 检查下一个token是否为运算符
@@ -106,19 +114,40 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
             val token = iter.cur().token
             val precedence = precedenceMap[token] ?: break
             
-            // 如果优先级不够，停止解析
+            // 如果优先级不够，需要回退到上一层
             if (precedence < minPrecedence) break
             
-            // 左结合性：使用 precedence + 1 确保左结合
-            val nextPrecedence = precedence + 1
+            // 入栈
+            stack.add(ParseFrame(current, token, minPrecedence))
             
-            iter.moveNext() // 消费运算符
-            val right = parsePrecedence(nextPrecedence)
-            val opName = operatorNames[token] ?: token.name.lowercase()
-            left = ASTNode.BinaryExp(opName, left, right)
+            // 消费运算符并解析右操作数
+            iter.moveNext()
+            current = parsePrefix()
+            
+            // 处理栈中可以合并的表达式
+            while (stack.isNotEmpty()) {
+                val frame = stack.last()
+                val framePrecedence = precedenceMap[frame.operator] ?: 0
+                
+                // 计算下一优先级
+                val nextPrecedence = framePrecedence + 1
+                
+                // 如果当前优先级不足以继续，则合并表达式
+                if (precedence >= nextPrecedence) break
+                
+                // 弹出栈帧并合并表达式
+                stack.removeLast()
+                current = ASTNode.BinaryExp(token, frame.left, current)
+            }
         }
         
-        return left
+        // 处理栈中剩余的所有表达式
+        while (stack.isNotEmpty()) {
+            val frame = stack.removeLast()
+            current = ASTNode.BinaryExp(frame.operator, frame.left, current)
+        }
+        
+        return current
     }
     
     /**
@@ -139,8 +168,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
                 iter.moveNext()
                 val precedence = precedenceMap[token] ?: 0
                 val operand = parsePrecedence(precedence)
-                val opName = operatorNames[token] ?: token.name.lowercase()
-                ASTNode.UnaryExp(opName, operand)
+                ASTNode.UnaryExp(token, operand)
             }
             // 字面量
             TokenType.TRUE -> {

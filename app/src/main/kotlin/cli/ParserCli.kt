@@ -17,7 +17,7 @@ class ParserCli {
             val lfi = LookForwardIterator.from(tok) { it.token != TokenType.SPACE && it.token != TokenType.NEWLINE && it.token!=TokenType.COMMENT }
             val ast = Parser(lfi).parseExpr()
             val pw = PrintWriter(stdout)
-            pw.print(ast.toString())
+            ASTNode.printAst(ast, pw,0)
             pw.flush()
         }
     }

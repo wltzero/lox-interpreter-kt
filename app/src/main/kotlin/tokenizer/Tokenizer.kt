@@ -205,7 +205,6 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
                         "if" -> TokenType.IF
                         "nil" -> TokenType.NIL
                         "or" -> TokenType.OR
-                        "print" -> TokenType.PRINT
                         "return" -> TokenType.RETURN
                         "super" -> TokenType.SUPER
                         "true" -> TokenType.TRUE
