@@ -57,7 +57,7 @@ sealed class ASTNode{
 class Parser(private val iter: LookForwardIterator<ParsedToken>){
     
     // 运算符优先级配置
-    private val precedenceMap = mapOf(
+    private val binaryPrecedenceMap = mapOf(
         TokenType.OR to 1,
         TokenType.AND to 2,
         TokenType.EQUAL_EQUAL to 3,
@@ -67,12 +67,24 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
         TokenType.GREATER to 4,
         TokenType.GREATER_EQUAL to 4,
         TokenType.PLUS to 5,
-        TokenType.MINUS to 5,
-        TokenType.STAR to 6,
+        TokenType.MINUS to 5,       // 中缀减号优先级5
+        TokenType.STAR to 6,        // 乘除优先级6
         TokenType.SLASH to 6,
-        TokenType.MOD to 6
+        TokenType.MOD to 6,
     )
-    
+    // 一元运算符优先级
+    private val unaryPrecedenceMap = mapOf(
+        TokenType.MINUS to 7,       // 前缀负号优先级7（高于乘除）
+        TokenType.PLUS to 7,
+        TokenType.BANG to 7
+    )
+
+    // 运算符结合性（左结合）
+    private val isLeftAssociative = setOf(
+        TokenType.PLUS, TokenType.MINUS,
+        TokenType.STAR, TokenType.SLASH, TokenType.MOD,
+        TokenType.AND, TokenType.OR
+    )
     fun parseExpr(): ASTNode {
         return parsePrecedence(0)
     }
@@ -96,11 +108,30 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
             // 检查下一个token是否为运算符
             if (!iter.hasNext()) break
             val token = iter.cur().token
-            val precedence = precedenceMap[token] ?: break
+            val precedence = binaryPrecedenceMap[token] ?: break
             
             // 如果优先级不够，需要回退到上一层
             if (precedence < minPrecedence) break
-            
+
+            // 入栈前先处理栈中可合并的表达式
+            while (stack.isNotEmpty()) {
+                val frame = stack.last()
+                val framePrecedence = binaryPrecedenceMap[frame.operator] ?: 0
+
+                // 左结合：当前优先级 <= 栈帧优先级 才合并
+                // 右结合：当前优先级 < 栈帧优先级 才合并
+                val shouldCollapse = if (isLeftAssociative.contains(frame.operator)) {
+                    precedence <= framePrecedence
+                } else {
+                    precedence < framePrecedence
+                }
+
+                if (!shouldCollapse) break
+
+                // 弹出栈帧并合并表达式
+                stack.removeLast()
+                current = ASTNode.BinaryExp(frame.operator, frame.left, current)
+            }
             // 入栈
             stack.add(ParseFrame(current, token, minPrecedence))
             
@@ -111,7 +142,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
             // 处理栈中可以合并的表达式
             while (stack.isNotEmpty()) {
                 val frame = stack.last()
-                val framePrecedence = precedenceMap[frame.operator] ?: 0
+                val framePrecedence = binaryPrecedenceMap[frame.operator] ?: 0
                 
                 // 计算下一优先级
                 val nextPrecedence = framePrecedence + 1
@@ -150,7 +181,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
             // 一元运算符
             TokenType.PLUS, TokenType.MINUS, TokenType.BANG -> {
                 iter.moveNext()
-                val precedence = precedenceMap[token] ?: 0
+                val precedence = unaryPrecedenceMap[token] ?: 0
                 val operand = parsePrecedence(precedence)
                 ASTNode.UnaryExp(token, operand)
             }
