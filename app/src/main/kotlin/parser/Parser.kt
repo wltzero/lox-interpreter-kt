@@ -21,19 +21,19 @@ sealed class ASTNode{
             when (node) {
                 is BinaryExp -> {
                     writer.print("${prefix}(${node.op.symbol}")
-                    printAst(node.left, writer, indent + 1)
-                    printAst(node.right, writer, indent + 1)
+                    printAst(node.left, writer, indent)
+                    printAst(node.right, writer, indent)
                     writer.print("${prefix})")
                 }
                 is UnaryExp -> {
-                    writer.print("${prefix}(${node.op.symbol} ")
-                    printAst(node.operand, writer, indent + 1)
-                    writer.print("${prefix})")
+                    writer.print("${prefix}(${node.op.symbol}")
+                    printAst(node.operand, writer, indent)
+                    writer.print(")")
                 }
                 is GroupingExp -> {
                     writer.print("${prefix}(group")
-                    printAst(node.expression, writer, indent + 1)
-                    writer.print("${prefix})")
+                    printAst(node.expression, writer, indent)
+                    writer.print(")")
                 }
                 is IdentifierExp -> {
                     writer.print("${prefix}${node.identifier}")
