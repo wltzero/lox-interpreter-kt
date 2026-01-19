@@ -15,16 +15,16 @@ fun main(args: Array<String>) {
     val filename = args[1]
 
     val fileContents = File(filename).readText()
-
+    println(fileContents)
     when (command) {
         "tokenize" -> {
-            val status = TokenizerCli.tokenize(File(filename).readText(), System.out, System.err)
+            val status = TokenizerCli.tokenize(fileContents, System.out, System.err)
             if (status == TokenizerCliStatus.ERROR) {
                 exitProcess(65)
             }
         }
         "parse" -> {
-            ParserCli.parse(File(filename).readText(), System.out, System.err)
+            ParserCli.parse(fileContents, System.out, System.err)
         }
         else -> {
             System.err.println("Unknown command: ${command}")
