@@ -22,6 +22,7 @@ enum class TokenType(val symbol: String? = null) {
     THIS("this"),
     TRUE("true"),
     WHILE("while"),
+    PRINT("print"),
     IDENTIFIER(null),                   // 标识符
     NUMBER(null),                       // 数字
     SPACE(" "),                         // 空格

@@ -209,6 +209,7 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
                         "super" -> TokenType.SUPER
                         "true" -> TokenType.TRUE
                         "while" -> TokenType.WHILE
+                        "print" -> TokenType.PRINT
                         else -> {
                             TokenType.IDENTIFIER
                         }
