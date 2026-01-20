@@ -111,7 +111,7 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
             TokenType.PLUS -> operandValue
             TokenType.BANG -> when(operandValue){
                 is Value.BooleanValue -> Value.BooleanValue(!operandValue.value)
-                is Value.NilValue -> Value.NilValue
+                is Value.NilValue -> Value.BooleanValue(true)
                 else -> throw RuntimeException("Unsupported operand type for unary bang: ${operandValue::class.simpleName}")
             }
             else -> throw RuntimeException("Unsupported unary operator: ${exp.op}")
