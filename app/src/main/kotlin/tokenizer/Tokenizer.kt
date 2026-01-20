@@ -76,7 +76,7 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
                     }
                 }
 
-                value = sb.toString().toDouble()
+                value = sb.toString()
                 TokenType.NUMBER
             }
             ' ', '\t' -> {

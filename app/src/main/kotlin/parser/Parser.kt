@@ -48,9 +48,14 @@ sealed class ASTNode{
             return visitor.visitNilLiteral(this)
         }
     }
-    class NumberExp(val number: Double): ASTNode(){
+    class DoubleLiteral(val number: Double): ASTNode(){
         override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visitNumberExp(this)
+            return visitor.visiteDoubleLiteral(this)
+        }
+    }
+    class IntegerLiteral(val number: Int): ASTNode(){
+        override fun accept(visitor: ASTVisitor<Value>): Value {
+            return visitor.visitIntegerLiteral(this)
         }
     }
 
@@ -62,7 +67,8 @@ sealed class ASTNode{
         fun visitStringLiteral(exp: StringLiteral): T
         fun visitBooleanLiteral(exp: BooleanLiteral): T
         fun visitNilLiteral(exp: NilLiteral): T
-        fun visitNumberExp(exp: NumberExp): T
+        fun visiteDoubleLiteral(exp: DoubleLiteral): T
+        fun visitIntegerLiteral(exp: IntegerLiteral): T
     }
 
     companion object {
@@ -97,7 +103,10 @@ sealed class ASTNode{
                 is NilLiteral -> {
                     writer.print("${prefix}nil")
                 }
-                is NumberExp -> {
+                is DoubleLiteral -> {
+                    writer.print("${prefix}${node.number}")
+                }
+                is IntegerLiteral -> {
                     writer.print("${prefix}${node.number}")
                 }
             }
@@ -253,7 +262,11 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
             }
             TokenType.NUMBER -> {
                 iter.moveNext()
-                ASTNode.NumberExp(value as Double)
+                if((value as String).contains('.')){
+                    ASTNode.DoubleLiteral(value.toDouble())
+                } else {
+                    ASTNode.IntegerLiteral(value.toInt())
+                }
             }
             TokenType.STRING -> {
                 iter.moveNext()

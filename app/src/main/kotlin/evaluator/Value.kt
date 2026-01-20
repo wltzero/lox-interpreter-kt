@@ -1,33 +1,39 @@
 package evaluator
 
 sealed class Value {
-    class NumberValue(val value: Double) : Value()
+    class DoubleValue(val value: Double) : Value()
+    class IntegerValue(val value: Int) : Value()
     class StringValue(val value: String) : Value()
     class BooleanValue(val value: Boolean) : Value()
     object NilValue : Value()
     class IdentifierValue(val name: String) : Value()
 
-    fun asNumber(): Double = when (this) {
-        is Value.NumberValue -> value
+    fun asDouble(): Double = when (this) {
+        is DoubleValue -> value
         else -> throw RuntimeException("Value is not a number")
+    }
+    fun asInteger(): Int = when (this) {
+        is IntegerValue -> value
+        else -> throw RuntimeException("Value is not an integer")
     }
 
     fun asString(): String = when (this) {
-        is Value.StringValue -> value
+        is StringValue -> value
         else -> throw RuntimeException("Value is not a string")
     }
 
     fun asBoolean(): Boolean = when (this) {
-        is Value.BooleanValue -> value
+        is BooleanValue -> value
         else -> throw RuntimeException("Value is not a boolean")
     }
 
     override fun toString(): String = when (this) {
-            is Value.NumberValue -> value.toString()
-            is Value.StringValue -> value
-            is Value.BooleanValue -> value.toString()
-            Value.NilValue -> "nil"
-            is Value.IdentifierValue -> name
+            is DoubleValue -> value.toString()
+            is IntegerValue -> value.toString()
+            is StringValue -> value
+            is BooleanValue -> value.toString()
+            NilValue -> "nil"
+            is IdentifierValue -> name
         }
 
 }
