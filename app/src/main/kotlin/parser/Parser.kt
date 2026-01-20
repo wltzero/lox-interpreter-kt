@@ -147,10 +147,10 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
                 // 计算下一优先级
                 val nextPrecedence = framePrecedence + 1
                 
-                // 如果当前优先级不足以继续，则合并表达式
-                if (precedence >= nextPrecedence) break
+                // 优先级足够，则退出
+                if (precedence < nextPrecedence) break
                 
-                // 弹出栈帧并合并表达式
+                // 优先级不足够，弹出栈帧并合并表达式
                 stack.removeLast()
                 current = ASTNode.BinaryExp(token, frame.left, current)
             }
