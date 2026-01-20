@@ -183,6 +183,10 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
                 read(1)
                 TokenType.SEMICOLON
             }
+            '%' -> {
+                read(1)
+                TokenType.MOD
+            }
             else -> {
                 fun isAlNum() = iter.cur() in 'a'..'z' || iter.cur() in 'A'..'Z' || iter.cur() == '_'
                 fun isAlNumOrDigit() = isAlNum() || iter.cur() in '0'..'9'
