@@ -3,6 +3,7 @@ package parser
 import collections.LookForwardIterator
 import tokenizer.ParsedToken
 import tokenizer.TokenType
+import kotlin.system.exitProcess
 
 
 sealed class ASTNode{
@@ -218,6 +219,15 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
                 val expr = parseExpr()
                 consume(TokenType.RIGHT_PAREN, "Expected ')' after expression")
                 ASTNode.GroupingExp(expr)
+            }
+            TokenType.STRING_UNTERMINATED -> {
+                iter.moveNext()
+                System.err.println("Unterminated string")
+                exitProcess(65)
+            }
+            TokenType.UNEXPECTED_CHAR -> {
+                iter.moveNext()
+                throw RuntimeException("Unexpected character")
             }
             else -> {
                 throw RuntimeException("Unexpected token: ${token}")

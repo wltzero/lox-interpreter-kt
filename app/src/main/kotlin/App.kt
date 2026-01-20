@@ -24,7 +24,12 @@ fun main(args: Array<String>) {
             }
         }
         "parse" -> {
-            ParserCli.parse(fileContents, System.out, System.err)
+            try {
+                ParserCli.parse(fileContents, System.out, System.err)
+            } catch (e: RuntimeException) {
+                System.err.println(e.message)
+                exitProcess(65)
+            }
         }
         else -> {
             System.err.println("Unknown command: ${command}")
