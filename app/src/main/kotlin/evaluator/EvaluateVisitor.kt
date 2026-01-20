@@ -20,10 +20,7 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
             TokenType.PLUS -> handlePlus(leftValue, rightValue)
             TokenType.MINUS -> handleMinus(leftValue, rightValue)
             TokenType.STAR -> handleStar(leftValue, rightValue)
-            TokenType.SLASH -> {
-                if (rightValue.asDouble() == 0.0) throw RuntimeException("Division by zero")
-                Value.DoubleValue(leftValue.asDouble() / rightValue.asDouble())
-            }
+            TokenType.SLASH -> handleSlash(leftValue, rightValue)
 
             TokenType.MOD -> Value.DoubleValue(leftValue.asDouble() % rightValue.asDouble())
 
@@ -95,6 +92,20 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
                 Value.DoubleValue(left.value * right.value)
             }
             else -> throw RuntimeException("Unsupported * operation between ${left::class.simpleName} and ${right::class.simpleName}")
+        }
+    }
+    private fun handleSlash(left: Value, right: Value): Value {
+        return when {
+            right is Value.DoubleValue && right.value == 0.0 -> throw RuntimeException("Division by zero")
+            right is Value.IntegerValue && right.value == 0 -> throw RuntimeException("Division by zero")
+
+            left is Value.DoubleValue && right is Value.DoubleValue -> {
+                Value.DoubleValue(left.value / right.value)
+            }
+            left is Value.IntegerValue && right is Value.IntegerValue -> {
+                Value.IntegerValue(left.value / right.value)
+            }
+            else -> throw RuntimeException("Unsupported / operation between ${left::class.simpleName} and ${right::class.simpleName}")
         }
     }
 

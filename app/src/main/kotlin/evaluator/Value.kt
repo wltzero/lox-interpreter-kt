@@ -10,6 +10,7 @@ sealed class Value {
 
     fun asDouble(): Double = when (this) {
         is DoubleValue -> value
+        is IntegerValue -> value.toDouble()
         else -> throw RuntimeException("Value is not a number")
     }
     fun asInteger(): Int = when (this) {
