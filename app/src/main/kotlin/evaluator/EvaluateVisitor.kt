@@ -103,7 +103,11 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
     override fun visitUnaryExp(exp: ASTNode.UnaryExp): Value {
         val operandValue = exp.operand.accept(this)
         return when (exp.op) {
-            TokenType.MINUS -> Value.DoubleValue(-operandValue.asDouble())
+            TokenType.MINUS -> when(operandValue){
+                is Value.DoubleValue -> Value.DoubleValue(-operandValue.value)
+                is Value.IntegerValue -> Value.IntegerValue(-operandValue.value)
+                else -> throw RuntimeException("Unsupported operand type for unary minus: ${operandValue::class.simpleName}")
+            }
             TokenType.PLUS -> operandValue
             TokenType.BANG -> Value.BooleanValue(!operandValue.asBoolean())
             else -> throw RuntimeException("Unsupported unary operator: ${exp.op}")
