@@ -107,7 +107,7 @@ sealed class ASTNode{
                     writer.print("${prefix}${node.number}")
                 }
                 is IntegerLiteral -> {
-                    writer.print("${prefix}${node.number}")
+                    writer.print("${prefix}${node.number.toDouble()}")
                 }
             }
         }
