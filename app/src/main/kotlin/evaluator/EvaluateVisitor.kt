@@ -127,7 +127,7 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
             TokenType.MINUS -> when(operandValue){
                 is Value.DoubleValue -> Value.DoubleValue(-operandValue.value)
                 is Value.IntegerValue -> Value.IntegerValue(-operandValue.value)
-                else -> throw RuntimeException("Unsupported operand type for unary minus: ${operandValue::class.simpleName}")
+                else -> throw RuntimeException("Operand must be a number.")
             }
             TokenType.PLUS -> operandValue
             TokenType.BANG -> when(operandValue){
