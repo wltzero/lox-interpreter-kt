@@ -33,7 +33,12 @@ fun main(args: Array<String>) {
             }
         }
         "evaluate" ->{
-            EvaluateCli.evaluate(fileContents, System.out, System.err)
+            try {
+                EvaluateCli.evaluate(fileContents, System.out, System.err)
+            } catch (e: RuntimeException) {
+                System.err.println(e.message)
+                exitProcess(70)
+            }
         }
         else -> {
             System.err.println("Unknown command: ${command}")

@@ -55,7 +55,7 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
             left is Value.StringValue && right is Value.StringValue -> {
                 Value.StringValue(left.value + right.value)
             }
-            else -> throw RuntimeException("Unsupported + operation between ${left::class.simpleName} and ${right::class.simpleName}")
+            else -> throw RuntimeException("Operands must be two numbers or two strings.")
         }
     }
 
@@ -73,7 +73,7 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
             left is Value.DoubleValue && right is Value.IntegerValue -> {
                 Value.DoubleValue(left.value - right.value)
             }
-            else -> throw RuntimeException("Unsupported - operation between ${left::class.simpleName} and ${right::class.simpleName}")
+            else -> throw RuntimeException("Operands must be numbers.")
         }
     }
 
@@ -91,7 +91,7 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
             left is Value.DoubleValue && right is Value.IntegerValue -> {
                 Value.DoubleValue(left.value * right.value)
             }
-            else -> throw RuntimeException("Unsupported * operation between ${left::class.simpleName} and ${right::class.simpleName}")
+            else -> throw RuntimeException("Operands must be numbers.")
         }
     }
     private fun handleSlash(left: Value, right: Value): Value {
@@ -115,7 +115,7 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
             left is Value.DoubleValue && right is Value.IntegerValue -> {
                 Value.DoubleValue(left.value / right.value)
             }
-            else -> throw RuntimeException("Unsupported / operation between ${left::class.simpleName} and ${right::class.simpleName}")
+            else -> throw RuntimeException("Operands must be numbers.")
         }
     }
 
@@ -127,7 +127,7 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
             TokenType.MINUS -> when(operandValue){
                 is Value.DoubleValue -> Value.DoubleValue(-operandValue.value)
                 is Value.IntegerValue -> Value.IntegerValue(-operandValue.value)
-                else -> throw RuntimeException("Unsupported operand type for unary minus: ${operandValue::class.simpleName}")
+                else -> throw RuntimeException("Operand must be a number.")
             }
             TokenType.PLUS -> operandValue
             TokenType.BANG -> when(operandValue){
