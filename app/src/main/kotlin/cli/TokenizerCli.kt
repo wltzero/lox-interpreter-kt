@@ -29,7 +29,7 @@ class TokenizerCli {
                     t.token != TokenType.COMMENT
                 ) {
                     if(t.token== TokenType.NUMBER){
-                        out.write("${t.token.name} ${t.stringValue} ${t.value as Double}\n")
+                        out.write("${t.token.name} ${t.stringValue} ${(t.value as String).toDouble()}\n")
                     }else{
                         out.write("${t.token.name} ${t.stringValue} ${t.value}\n")
                     }
