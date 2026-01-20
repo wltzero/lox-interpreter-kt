@@ -1,19 +1,69 @@
 package parser
 
 import collections.LookForwardIterator
+import evaluator.Value
 import tokenizer.ParsedToken
 import tokenizer.TokenType
 
 
 sealed class ASTNode{
-    class BinaryExp(val op: TokenType, val left: ASTNode, val right: ASTNode): ASTNode()
-    class UnaryExp(val op: TokenType, val operand: ASTNode): ASTNode()
-    class GroupingExp(val expression: ASTNode): ASTNode()
-    class IdentifierExp(val identifier: String): ASTNode()
-    class StringLiteral(val string: String): ASTNode()
-    class BooleanLiteral(val value: Boolean): ASTNode()
-    class NilLiteral: ASTNode()
-    class NumberExp(val number: Double): ASTNode()
+    abstract fun accept(visitor: ASTVisitor<Value>): Value
+
+    //二元表达式节点
+    class BinaryExp(val op: TokenType, val left: ASTNode, val right: ASTNode): ASTNode(){
+        override fun accept(visitor: ASTVisitor<Value>): Value {
+            return visitor.visitBinaryExp(this)
+        }
+    }
+    //一元表达式节点
+    class UnaryExp(val op: TokenType, val operand: ASTNode): ASTNode(){
+        override fun accept(visitor: ASTVisitor<Value>): Value {
+            return visitor.visitUnaryExp(this)
+        }
+    }
+    //分组/括号表达式节点
+    class GroupingExp(val expression: ASTNode): ASTNode(){
+        override fun accept(visitor: ASTVisitor<Value>): Value {
+            return visitor.visitGroupingExp(this)
+        }
+    }
+    //标识符表达式节点
+    class IdentifierExp(val identifier: String): ASTNode(){
+        override fun accept(visitor: ASTVisitor<Value>): Value {
+            return visitor.visitIdentifierExp(this)
+        }
+    }
+    class StringLiteral(val string: String): ASTNode(){
+        override fun accept(visitor: ASTVisitor<Value>): Value {
+            return visitor.visitStringLiteral(this)
+        }
+    }
+    class BooleanLiteral(val value: Boolean): ASTNode(){
+        override fun accept(visitor: ASTVisitor<Value>): Value {
+            return visitor.visitBooleanLiteral(this)
+        }
+    }
+    class NilLiteral: ASTNode(){
+        override fun accept(visitor: ASTVisitor<Value>): Value {
+            return visitor.visitNilLiteral(this)
+        }
+    }
+    class NumberExp(val number: Double): ASTNode(){
+        override fun accept(visitor: ASTVisitor<Value>): Value {
+            return visitor.visitNumberExp(this)
+        }
+    }
+
+    interface ASTVisitor<T> {
+        fun visitBinaryExp(exp: BinaryExp): T
+        fun visitUnaryExp(exp: UnaryExp): T
+        fun visitGroupingExp(exp: GroupingExp): T
+        fun visitIdentifierExp(exp: IdentifierExp): T
+        fun visitStringLiteral(exp: StringLiteral): T
+        fun visitBooleanLiteral(exp: BooleanLiteral): T
+        fun visitNilLiteral(exp: NilLiteral): T
+        fun visitNumberExp(exp: NumberExp): T
+    }
 
     companion object {
         fun printAst(node: ASTNode, writer: java.io.PrintWriter, indent: Int = 0) {

@@ -1,3 +1,4 @@
+import cli.EvaluateCli
 import cli.ParserCli
 import cli.TokenizerCli
 import tokenizer.TokenizerCliStatus
@@ -30,6 +31,9 @@ fun main(args: Array<String>) {
                 System.err.println(e.message)
                 exitProcess(65)
             }
+        }
+        "evaluate" ->{
+            EvaluateCli.evaluate(fileContents, System.out, System.err)
         }
         else -> {
             System.err.println("Unknown command: ${command}")
