@@ -3,7 +3,6 @@ package parser
 import collections.LookForwardIterator
 import tokenizer.ParsedToken
 import tokenizer.TokenType
-import kotlin.system.exitProcess
 
 
 sealed class ASTNode{
