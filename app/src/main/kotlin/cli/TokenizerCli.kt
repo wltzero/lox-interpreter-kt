@@ -28,7 +28,11 @@ class TokenizerCli {
                     t.token != TokenType.NEWLINE &&
                     t.token != TokenType.COMMENT
                 ) {
-                    out.write("${t.token.name} ${t.stringValue} ${t.value}\n")
+                    if(t.token== TokenType.NUMBER){
+                        out.write("${t.token.name} ${t.stringValue} ${t.value as Double}\n")
+                    }else{
+                        out.write("${t.token.name} ${t.stringValue} ${t.value}\n")
+                    }
                 }
             }
             err.flush()
