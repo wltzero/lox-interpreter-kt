@@ -103,7 +103,17 @@ class EvaluateVisitor : ASTNode.ASTVisitor<Value> {
                 Value.DoubleValue(left.value / right.value)
             }
             left is Value.IntegerValue && right is Value.IntegerValue -> {
-                Value.IntegerValue(left.value / right.value)
+                if (left.value % right.value == 0) {
+                    Value.IntegerValue(left.value / right.value)
+                } else {
+                    Value.DoubleValue(left.value.toDouble() / right.value.toDouble())
+                }
+            }
+            left is Value.IntegerValue && right is Value.DoubleValue-> {
+                Value.DoubleValue(left.value / right.value)
+            }
+            left is Value.DoubleValue && right is Value.IntegerValue -> {
+                Value.DoubleValue(left.value / right.value)
             }
             else -> throw RuntimeException("Unsupported / operation between ${left::class.simpleName} and ${right::class.simpleName}")
         }
