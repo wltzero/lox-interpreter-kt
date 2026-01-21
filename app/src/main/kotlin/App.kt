@@ -48,7 +48,7 @@ fun main(args: Array<String>) {
                 StatementCli.doRun(fileContents, System.out, System.err)
             } catch (e: ParserException){
                 System.err.println(e.message)
-                exitProcess(70)
+                exitProcess(65)
             } catch (e: EvaluateException) {
                 System.err.println(e.message)
                 exitProcess(70)
