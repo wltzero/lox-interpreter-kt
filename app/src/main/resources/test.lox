@@ -36,5 +36,16 @@
 //var a = 1;
 //print a+3;
 
-var bar;
-print bar;
+//var bar;
+//print bar;
+
+//var bar = "hello";
+//var baz;
+//print baz;
+
+var a;
+var b = 2;
+var a = b = 1;
+a = 3;
+print a;
+print b;
