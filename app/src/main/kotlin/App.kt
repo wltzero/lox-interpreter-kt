@@ -1,5 +1,6 @@
 import cli.EvaluateCli
 import cli.ParserCli
+import cli.StatementCli
 import cli.TokenizerCli
 import tokenizer.TokenizerCliStatus
 import java.io.File
@@ -39,6 +40,9 @@ fun main(args: Array<String>) {
                 System.err.println(e.message)
                 exitProcess(70)
             }
+        }
+        "run" ->{
+            StatementCli.doRun(fileContents, System.out, System.err)
         }
         else -> {
             System.err.println("Unknown command: ${command}")

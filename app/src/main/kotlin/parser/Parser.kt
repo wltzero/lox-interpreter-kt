@@ -2,118 +2,151 @@ package parser
 
 import collections.LookForwardIterator
 import evaluator.Value
+import parser.ASTNode.Expr.ExprVisitor
 import tokenizer.ParsedToken
 import tokenizer.TokenType
 
 
-sealed class ASTNode{
-    abstract fun accept(visitor: ASTVisitor<Value>): Value
+sealed class ASTNode {
+    sealed class Expr : ASTNode() {
+        abstract fun accept(visitor: ExprVisitor<Value>): Value
 
-    //二元表达式节点
-    class BinaryExp(val op: TokenType, val left: ASTNode, val right: ASTNode): ASTNode(){
-        override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visitBinaryExp(this)
+        //二元表达式节点
+        class BinaryExp(val op: TokenType, val left: Expr, val right: Expr) : Expr() {
+            override fun accept(visitor: ExprVisitor<Value>): Value {
+                return visitor.visitBinaryExp(this)
+            }
         }
-    }
-    //一元表达式节点
-    class UnaryExp(val op: TokenType, val operand: ASTNode): ASTNode(){
-        override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visitUnaryExp(this)
+
+        //一元表达式节点
+        class UnaryExp(val op: TokenType, val operand: Expr) : Expr() {
+            override fun accept(visitor: ExprVisitor<Value>): Value {
+                return visitor.visitUnaryExp(this)
+            }
         }
-    }
-    //分组/括号表达式节点
-    class GroupingExp(val expression: ASTNode): ASTNode(){
-        override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visitGroupingExp(this)
+
+        //分组/括号表达式节点
+        class GroupingExp(val expression: Expr) : Expr() {
+            override fun accept(visitor: ExprVisitor<Value>): Value {
+                return visitor.visitGroupingExp(this)
+            }
         }
-    }
-    //标识符表达式节点
-    class IdentifierExp(val identifier: String): ASTNode(){
-        override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visitIdentifierExp(this)
+
+        class StringLiteral(val string: String) : Expr() {
+            override fun accept(visitor: ExprVisitor<Value>): Value {
+                return visitor.visitStringLiteral(this)
+            }
         }
-    }
-    class StringLiteral(val string: String): ASTNode(){
-        override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visitStringLiteral(this)
+
+        class BooleanLiteral(val value: Boolean) : Expr() {
+            override fun accept(visitor: ExprVisitor<Value>): Value {
+                return visitor.visitBooleanLiteral(this)
+            }
         }
-    }
-    class BooleanLiteral(val value: Boolean): ASTNode(){
-        override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visitBooleanLiteral(this)
+
+        class NilLiteral : Expr() {
+            override fun accept(visitor: ExprVisitor<Value>): Value {
+                return visitor.visitNilLiteral(this)
+            }
         }
-    }
-    class NilLiteral: ASTNode(){
-        override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visitNilLiteral(this)
+
+        class DoubleLiteral(val number: Double) : Expr() {
+            override fun accept(visitor: ExprVisitor<Value>): Value {
+                return visitor.visiteDoubleLiteral(this)
+            }
         }
-    }
-    class DoubleLiteral(val number: Double): ASTNode(){
-        override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visiteDoubleLiteral(this)
+
+        class IntegerLiteral(val number: Int) : Expr() {
+            override fun accept(visitor: ExprVisitor<Value>): Value {
+                return visitor.visitIntegerLiteral(this)
+            }
         }
-    }
-    class IntegerLiteral(val number: Int): ASTNode(){
-        override fun accept(visitor: ASTVisitor<Value>): Value {
-            return visitor.visitIntegerLiteral(this)
+
+        interface ExprVisitor<T> {
+            fun visitBinaryExp(exp: BinaryExp): T
+            fun visitUnaryExp(exp: UnaryExp): T
+            fun visitGroupingExp(exp: GroupingExp): T
+            fun visitStringLiteral(exp: StringLiteral): T
+            fun visitBooleanLiteral(exp: BooleanLiteral): T
+            fun visitNilLiteral(exp: NilLiteral): T
+            fun visiteDoubleLiteral(exp: DoubleLiteral): T
+            fun visitIntegerLiteral(exp: IntegerLiteral): T
         }
     }
 
-    interface ASTVisitor<T> {
-        fun visitBinaryExp(exp: BinaryExp): T
-        fun visitUnaryExp(exp: UnaryExp): T
-        fun visitGroupingExp(exp: GroupingExp): T
-        fun visitIdentifierExp(exp: IdentifierExp): T
-        fun visitStringLiteral(exp: StringLiteral): T
-        fun visitBooleanLiteral(exp: BooleanLiteral): T
-        fun visitNilLiteral(exp: NilLiteral): T
-        fun visiteDoubleLiteral(exp: DoubleLiteral): T
-        fun visitIntegerLiteral(exp: IntegerLiteral): T
+
+    sealed class Stmt : ASTNode() {
+        abstract fun accept(visitor: StmtVisitor<Value>): Any
+
+        class ExpressionStmt(val expression: Expr) : Stmt() {
+            override fun accept(visitor: StmtVisitor<Value>): Value {
+                return visitor.visitExpressionStmt(this)
+            }
+        }
+
+        class PrintStmt(val expression: Expr) : Stmt() {
+            override fun accept(visitor: StmtVisitor<Value>) {
+                visitor.visitPrintStmt(this)
+            }
+        }
+
+        interface StmtVisitor<T> {
+            fun visitExpressionStmt(stmt: ExpressionStmt): T
+            fun visitPrintStmt(stmt: PrintStmt)
+        }
     }
+
 
     companion object {
         fun printAst(node: ASTNode, writer: java.io.PrintWriter, indent: Int = 0) {
             val prefix = " ".repeat(indent)
             when (node) {
-                is BinaryExp -> {
+                is Expr.BinaryExp -> {
                     writer.print("${prefix}(${node.op.symbol}")
                     printAst(node.left, writer, 1)
                     printAst(node.right, writer, 1)
                     writer.print(")")
                 }
-                is UnaryExp -> {
+
+                is Expr.UnaryExp -> {
                     writer.print("${prefix}(${node.op.symbol}")
                     printAst(node.operand, writer, 1)
                     writer.print(")")
                 }
-                is GroupingExp -> {
+
+                is Expr.GroupingExp -> {
                     writer.print("${prefix}(group")
                     printAst(node.expression, writer, 1)
                     writer.print(")")
                 }
-                is IdentifierExp -> {
-                    writer.print("${prefix}${node.identifier}")
-                }
-                is StringLiteral -> {
+
+                is Expr.StringLiteral -> {
                     writer.print("${prefix}${node.string}")
                 }
-                is BooleanLiteral -> {
+
+                is Expr.BooleanLiteral -> {
                     writer.print("${prefix}${node.value}")
                 }
-                is NilLiteral -> {
+
+                is Expr.NilLiteral -> {
                     writer.print("${prefix}nil")
                 }
-                is DoubleLiteral -> {
+
+                is Expr.DoubleLiteral -> {
                     writer.print("${prefix}${node.number}")
                 }
-                is IntegerLiteral -> {
+
+                is Expr.IntegerLiteral -> {
                     writer.print("${prefix}${node.number.toDouble()}")
                 }
+
+                else -> {}
             }
         }
     }
 }
-class Parser(private val iter: LookForwardIterator<ParsedToken>){
+
+class Parser(private val iter: LookForwardIterator<ParsedToken>) {
 
     // 运算符优先级配置
     private val binaryPrecedenceMap = mapOf(
@@ -131,44 +164,62 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
         TokenType.SLASH to 6,
         TokenType.MOD to 6,
     )
+
     // 一元运算符优先级
     private val unaryPrecedenceMap = mapOf(
         TokenType.MINUS to 7,       // 前缀负号优先级7（高于乘除）
-        TokenType.PLUS to 7,
-        TokenType.BANG to 7
+        TokenType.PLUS to 7, TokenType.BANG to 7
     )
 
     // 运算符结合性（左结合）
     private val isLeftAssociative = setOf(
-        TokenType.PLUS, TokenType.MINUS,
-        TokenType.STAR, TokenType.SLASH, TokenType.MOD,
-        TokenType.AND, TokenType.OR,
-        TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL,
-        TokenType.LESS, TokenType.LESS_EQUAL,
-        TokenType.GREATER, TokenType.GREATER_EQUAL
+        TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH, TokenType.MOD, TokenType.AND, TokenType.OR, TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL, TokenType.GREATER, TokenType.GREATER_EQUAL
     )
-    fun parseExpr(): ASTNode {
+
+    fun parseExpr(): ASTNode.Expr {
         return parsePrecedence(0)
+    }
+
+    fun parseStmt(): List<ASTNode.Stmt> {
+        val list = mutableListOf<ASTNode.Stmt>()
+        while (iter.hasNext()) {
+            val n = when (iter.cur().token) {
+                TokenType.PRINT -> {
+                    iter.moveNext()
+                    ASTNode.Stmt.PrintStmt(parseExpr())
+                }
+                TokenType.EOF -> {
+                    return list
+                }
+                else -> {
+                    ASTNode.Stmt.ExpressionStmt(parseExpr())
+                }
+            }
+            list.add(n)
+        }
+        return list
     }
 
     // 栈元素数据类，用于保存解析状态
     private data class ParseFrame(
-        val left: ASTNode,
-        val operator: TokenType,
-        val minPrecedence: Int
+        val left: ASTNode.Expr, val operator: TokenType, val minPrecedence: Int
     )
 
     /**
      * 使用栈实现的Pratt解析器
      * @param minPrecedence 当前允许的最小优先级
      */
-    private fun parsePrecedence(minPrecedence: Int): ASTNode {
+    private fun parsePrecedence(minPrecedence: Int): ASTNode.Expr {
         val stack = mutableListOf<ParseFrame>()
         var current = parsePrefix()
 
         while (true) {
-            // 检查下一个token是否为运算符
+            // 如果没有下一个token或者下一个token是分号，则结束解析
             if (!iter.hasNext()) break
+            if (iter.cur().token== TokenType.SEMICOLON) {
+                iter.moveNext()
+                break
+            }
             val token = iter.cur().token
             val precedence = binaryPrecedenceMap[token] ?: break
 
@@ -192,7 +243,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
 
                 // 弹出栈帧并合并表达式
                 stack.removeLast()
-                current = ASTNode.BinaryExp(frame.operator, frame.left, current)
+                current = ASTNode.Expr.BinaryExp(frame.operator, frame.left, current)
             }
             // 入栈
             stack.add(ParseFrame(current, token, minPrecedence))
@@ -214,14 +265,14 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
 
                 // 优先级不足够，弹出栈帧并合并表达式
                 stack.removeLast()
-                current = ASTNode.BinaryExp(frame.operator, frame.left, current)
+                current = ASTNode.Expr.BinaryExp(frame.operator, frame.left, current)
             }
         }
 
         // 处理栈中剩余的所有表达式
         while (stack.isNotEmpty()) {
             val frame = stack.removeLast()
-            current = ASTNode.BinaryExp(frame.operator, frame.left, current)
+            current = ASTNode.Expr.BinaryExp(frame.operator, frame.left, current)
         }
 
         return current
@@ -230,7 +281,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
     /**
      * 解析前缀表达式（一元运算符和基本元素）
      */
-    private fun parsePrefix(): ASTNode {
+    private fun parsePrefix(): ASTNode.Expr {
         if (!iter.hasNext()) {
             throw RuntimeException("Unexpected end of input")
         }
@@ -245,51 +296,55 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>){
                 iter.moveNext()
                 val precedence = unaryPrecedenceMap[token] ?: 0
                 val operand = parsePrecedence(precedence)
-                ASTNode.UnaryExp(token, operand)
+                ASTNode.Expr.UnaryExp(token, operand)
             }
             // 字面量
             TokenType.TRUE -> {
                 iter.moveNext()
-                ASTNode.BooleanLiteral(true)
+                ASTNode.Expr.BooleanLiteral(true)
             }
+
             TokenType.FALSE -> {
                 iter.moveNext()
-                ASTNode.BooleanLiteral(false)
+                ASTNode.Expr.BooleanLiteral(false)
             }
+
             TokenType.NIL -> {
                 iter.moveNext()
-                ASTNode.NilLiteral()
+                ASTNode.Expr.NilLiteral()
             }
+
             TokenType.NUMBER -> {
                 iter.moveNext()
-                if((value as String).contains('.')){
-                    ASTNode.DoubleLiteral(value.toDouble())
+                if ((value as String).contains('.')) {
+                    ASTNode.Expr.DoubleLiteral(value.toDouble())
                 } else {
-                    ASTNode.IntegerLiteral(value.toInt())
+                    ASTNode.Expr.IntegerLiteral(value.toInt())
                 }
             }
+
             TokenType.STRING -> {
                 iter.moveNext()
-                ASTNode.StringLiteral(stringValue.removeSurrounding("\""))
+                ASTNode.Expr.StringLiteral(stringValue.removeSurrounding("\""))
             }
-            TokenType.IDENTIFIER -> {
-                iter.moveNext()
-                ASTNode.IdentifierExp(stringValue)
-            }
+
             TokenType.LEFT_PAREN -> {
                 iter.moveNext()
                 val expr = parseExpr()
                 consume(TokenType.RIGHT_PAREN, "Expected ')' after expression")
-                ASTNode.GroupingExp(expr)
+                ASTNode.Expr.GroupingExp(expr)
             }
+
             TokenType.STRING_UNTERMINATED -> {
                 iter.moveNext()
                 throw RuntimeException("Unterminated string")
             }
+
             TokenType.UNEXPECTED_CHAR -> {
                 iter.moveNext()
                 throw RuntimeException("Unexpected character")
             }
+
             else -> {
                 throw RuntimeException("Unexpected token: ${token}")
             }
