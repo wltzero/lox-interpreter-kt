@@ -42,7 +42,11 @@ fun main(args: Array<String>) {
             }
         }
         "run" ->{
-            StatementCli.doRun(fileContents, System.out, System.err)
+            try {
+                StatementCli.doRun(fileContents, System.out, System.err)
+            } catch (e: RuntimeException) {
+                exitProcess(65)
+            }
         }
         else -> {
             System.err.println("Unknown command: ${command}")
