@@ -2,6 +2,7 @@ import cli.EvaluateCli
 import cli.ParserCli
 import cli.StatementCli
 import cli.TokenizerCli
+import evaluator.EvaluateException
 import parser.ParserException
 import tokenizer.TokenizerCliStatus
 import java.io.File
@@ -45,11 +46,13 @@ fun main(args: Array<String>) {
         "run" ->{
             try {
                 StatementCli.doRun(fileContents, System.out, System.err)
-            }catch (e: ParserException){
+            } catch (e: ParserException){
                 System.err.println(e.message)
                 exitProcess(70)
-            } catch (e: RuntimeException) {
+            } catch (e: EvaluateException) {
                 System.err.println(e.message)
+                exitProcess(70)
+            } catch (e: RuntimeException){
                 exitProcess(65)
             }
         }

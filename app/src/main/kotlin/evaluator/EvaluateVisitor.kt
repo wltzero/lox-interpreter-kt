@@ -3,6 +3,7 @@ package evaluator
 import parser.ASTNode
 import tokenizer.TokenType
 
+class EvaluateException(message: String): RuntimeException(message)
 
 object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
     fun evaluate(node: ASTNode.Expr): Value {
@@ -32,7 +33,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
             TokenType.AND -> Value.BooleanValue(leftValue.asBoolean() && rightValue.asBoolean())
             TokenType.OR -> Value.BooleanValue(leftValue.asBoolean() || rightValue.asBoolean())
 
-            else -> throw RuntimeException("Unsupported binary operator: ${exp.op}")
+            else -> throw EvaluateException("Unsupported binary operator: ${exp.op}")
         }
     }
 
@@ -58,7 +59,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
                 Value.StringValue(left.value + right.value)
             }
 
-            else -> throw RuntimeException("Operands must be two numbers or two strings.")
+            else -> throw EvaluateException("Operands must be two numbers or two strings.")
         }
     }
 
@@ -81,7 +82,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
                 Value.DoubleValue(left.value - right.value)
             }
 
-            else -> throw RuntimeException("Operands must be numbers.")
+            else -> throw EvaluateException("Operands must be numbers.")
         }
     }
 
@@ -103,14 +104,14 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
                 Value.DoubleValue(left.value * right.value)
             }
 
-            else -> throw RuntimeException("Operands must be numbers.")
+            else -> throw EvaluateException("Operands must be numbers.")
         }
     }
 
     private fun handleSlash(left: Value, right: Value): Value {
         return when {
-            right is Value.DoubleValue && right.value == 0.0 -> throw RuntimeException("Division by zero")
-            right is Value.IntegerValue && right.value == 0 -> throw RuntimeException("Division by zero")
+            right is Value.DoubleValue && right.value == 0.0 -> throw EvaluateException("Division by zero")
+            right is Value.IntegerValue && right.value == 0 -> throw EvaluateException("Division by zero")
 
             left is Value.DoubleValue && right is Value.DoubleValue -> {
                 Value.DoubleValue(left.value / right.value)
@@ -132,7 +133,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
                 Value.DoubleValue(left.value / right.value)
             }
 
-            else -> throw RuntimeException("Operands must be numbers.")
+            else -> throw EvaluateException("Operands must be numbers.")
         }
     }
 
@@ -142,7 +143,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
             TokenType.MINUS -> when (operandValue) {
                 is Value.DoubleValue -> Value.DoubleValue(-operandValue.value)
                 is Value.IntegerValue -> Value.IntegerValue(-operandValue.value)
-                else -> throw RuntimeException("Operand must be a number.")
+                else -> throw EvaluateException("Operand must be a number.")
             }
 
             TokenType.PLUS -> operandValue
@@ -151,10 +152,10 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
                 is Value.NilValue -> Value.BooleanValue(true)
                 is Value.IntegerValue -> Value.BooleanValue(false)
                 is Value.DoubleValue -> Value.BooleanValue(false)
-                else -> throw RuntimeException("Unsupported operand type for unary bang: ${operandValue::class.simpleName}")
+                else -> throw EvaluateException("Unsupported operand type for unary bang: ${operandValue::class.simpleName}")
             }
 
-            else -> throw RuntimeException("Unsupported unary operator: ${exp.op}")
+            else -> throw EvaluateException("Unsupported unary operator: ${exp.op}")
         }
     }
 
