@@ -204,14 +204,19 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                         iter.moveNext()
                     }
                     val name = iter.cur().stringValue
+                    iter.moveNext()
                     // 如果有 = 则解析表达式，否则默认为 nil
-                    val initializer = if (iter.cur().token == TokenType.EQUAL) {
+                    val stmt = if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
                         iter.moveNext()
                         parseExpr()
                     } else {
+                        // 消费可能存在的分号
+                        if (iter.cur().token == TokenType.SEMICOLON) {
+                            iter.moveNext()
+                        }
                         ASTNode.Expr.NilLiteral()
                     }
-                    ASTNode.Stmt.VarStmt(name, initializer)
+                    ASTNode.Stmt.VarStmt(name, stmt)
                 }
                 TokenType.EOF -> {
                     return list
