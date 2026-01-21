@@ -1,63 +1,66 @@
 package parser
 
 import collections.LookForwardIterator
-import evaluator.Value
-import parser.ASTNode.Expr.ExprVisitor
+import evaluator.LiteralValue
 import tokenizer.ParsedToken
 import tokenizer.TokenType
 
 
 sealed class ASTNode {
     sealed class Expr : ASTNode() {
-        abstract fun accept(visitor: ExprVisitor<Value>): Value
+        abstract fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue
 
         //二元表达式节点
         class BinaryExp(val op: TokenType, val left: Expr, val right: Expr) : Expr() {
-            override fun accept(visitor: ExprVisitor<Value>): Value {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitBinaryExp(this)
             }
         }
 
         //一元表达式节点
         class UnaryExp(val op: TokenType, val operand: Expr) : Expr() {
-            override fun accept(visitor: ExprVisitor<Value>): Value {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitUnaryExp(this)
             }
         }
 
         //分组/括号表达式节点
         class GroupingExp(val expression: Expr) : Expr() {
-            override fun accept(visitor: ExprVisitor<Value>): Value {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitGroupingExp(this)
             }
         }
-
+        class IdentifyExp(val identifier: String) : Expr() {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
+                return visitor.visitIdentifyExp(this)
+            }
+        }
         class StringLiteral(val string: String) : Expr() {
-            override fun accept(visitor: ExprVisitor<Value>): Value {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitStringLiteral(this)
             }
         }
 
         class BooleanLiteral(val value: Boolean) : Expr() {
-            override fun accept(visitor: ExprVisitor<Value>): Value {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitBooleanLiteral(this)
             }
         }
 
         class NilLiteral : Expr() {
-            override fun accept(visitor: ExprVisitor<Value>): Value {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitNilLiteral(this)
             }
         }
 
         class DoubleLiteral(val number: Double) : Expr() {
-            override fun accept(visitor: ExprVisitor<Value>): Value {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visiteDoubleLiteral(this)
             }
         }
 
         class IntegerLiteral(val number: Int) : Expr() {
-            override fun accept(visitor: ExprVisitor<Value>): Value {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitIntegerLiteral(this)
             }
         }
@@ -71,28 +74,35 @@ sealed class ASTNode {
             fun visitNilLiteral(exp: NilLiteral): T
             fun visiteDoubleLiteral(exp: DoubleLiteral): T
             fun visitIntegerLiteral(exp: IntegerLiteral): T
+            fun visitIdentifyExp(exp: IdentifyExp): T
         }
     }
 
 
     sealed class Stmt : ASTNode() {
-        abstract fun accept(visitor: StmtVisitor<Value>): Any
+        abstract fun accept(visitor: StmtVisitor<LiteralValue>): Any
 
         class ExpressionStmt(val expression: Expr) : Stmt() {
-            override fun accept(visitor: StmtVisitor<Value>): Value {
+            override fun accept(visitor: StmtVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitExpressionStmt(this)
             }
         }
 
         class PrintStmt(val expression: Expr) : Stmt() {
-            override fun accept(visitor: StmtVisitor<Value>) {
+            override fun accept(visitor: StmtVisitor<LiteralValue>) {
                 visitor.visitPrintStmt(this)
             }
         }
 
+        class VarStmt(val name: String, val expression: Expr) : Stmt() {
+            override fun accept(visitor: StmtVisitor<LiteralValue>){
+                return visitor.visitVarStmt(this)
+            }
+        }
         interface StmtVisitor<T> {
             fun visitExpressionStmt(stmt: ExpressionStmt): T
             fun visitPrintStmt(stmt: PrintStmt)
+            fun visitVarStmt(stmt: VarStmt)
         }
     }
 
@@ -187,6 +197,18 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 TokenType.PRINT -> {
                     iter.moveNext()
                     ASTNode.Stmt.PrintStmt(parseExpr())
+                }
+                TokenType.VAR ->{
+                    iter.moveNext()
+                    while (iter.cur().token != TokenType.IDENTIFIER) {
+                        iter.moveNext()
+                    }
+                    val name = iter.cur().stringValue
+                    while (iter.cur().token != TokenType.EQUAL){
+                        iter.moveNext()
+                    }
+                    iter.moveNext()
+                    ASTNode.Stmt.VarStmt(name, parseExpr())
                 }
                 TokenType.EOF -> {
                     return list
@@ -333,6 +355,10 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 val expr = parseExpr()
                 consume(TokenType.RIGHT_PAREN, "Expected ')' after expression")
                 ASTNode.Expr.GroupingExp(expr)
+            }
+            TokenType.IDENTIFIER -> {
+                iter.moveNext()
+                ASTNode.Expr.IdentifyExp(stringValue)
             }
 
             TokenType.STRING_UNTERMINATED -> {

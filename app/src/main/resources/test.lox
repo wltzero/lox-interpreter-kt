@@ -32,4 +32,5 @@
 
 //print "hello";
 //print "world";
-85 + "quz";
+var a = 1;
+print a+3;

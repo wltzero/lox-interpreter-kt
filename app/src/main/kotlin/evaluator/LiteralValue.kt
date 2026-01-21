@@ -1,0 +1,40 @@
+package evaluator
+
+sealed class LiteralValue {
+    class DoubleLiteralValue(val value: Double) : LiteralValue()
+    class IntegerLiteralValue(val value: Int) : LiteralValue()
+    class StringLiteralValue(val value: String) : LiteralValue()
+    class BooleanLiteralValue(val value: Boolean) : LiteralValue()
+    object NilLiteralValue : LiteralValue()
+    class IdentifierLiteralValue(val name: String) : LiteralValue()
+
+    fun asDouble(): Double = when (this) {
+        is DoubleLiteralValue -> value
+        is IntegerLiteralValue -> value.toDouble()
+        else -> throw RuntimeException("Value is not a number")
+    }
+    fun asInteger(): Int = when (this) {
+        is IntegerLiteralValue -> value
+        else -> throw RuntimeException("Value is not an integer")
+    }
+
+    fun asString(): String = when (this) {
+        is StringLiteralValue -> value
+        else -> throw RuntimeException("Value is not a string")
+    }
+
+    fun asBoolean(): Boolean = when (this) {
+        is BooleanLiteralValue -> value
+        else -> throw RuntimeException("Value is not a boolean")
+    }
+
+    override fun toString(): String = when (this) {
+            is DoubleLiteralValue -> value.toString()
+            is IntegerLiteralValue -> value.toString()
+            is StringLiteralValue -> value
+            is BooleanLiteralValue -> value.toString()
+            NilLiteralValue -> "nil"
+            is IdentifierLiteralValue -> name
+        }
+
+}

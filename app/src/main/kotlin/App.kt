@@ -4,6 +4,7 @@ import cli.StatementCli
 import cli.TokenizerCli
 import evaluator.EvaluateException
 import parser.ParserException
+import statement.VariableNotFoundException
 import tokenizer.TokenizerCliStatus
 import java.io.File
 import kotlin.system.exitProcess
@@ -52,8 +53,9 @@ fun main(args: Array<String>) {
             } catch (e: EvaluateException) {
                 System.err.println(e.message)
                 exitProcess(70)
-            } catch (e: RuntimeException){
-                exitProcess(65)
+            } catch (e: VariableNotFoundException){
+                System.err.println(e.message)
+                exitProcess(70)
             }
         }
         else -> {

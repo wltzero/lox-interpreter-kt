@@ -1,17 +1,18 @@
 package evaluator
 
 import parser.ASTNode
+import statement.GlobalEnvironment
 import tokenizer.TokenType
 
 class EvaluateException(message: String): RuntimeException(message)
 
-object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
-    fun evaluate(node: ASTNode.Expr): Value {
+object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
+    fun evaluate(node: ASTNode.Expr): LiteralValue {
         return node.accept(this)
     }
 
 
-    override fun visitBinaryExp(exp: ASTNode.Expr.BinaryExp): Value {
+    override fun visitBinaryExp(exp: ASTNode.Expr.BinaryExp): LiteralValue {
         val leftValue = exp.left.accept(this)
         val rightValue = exp.right.accept(this)
 
@@ -21,42 +22,42 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
             TokenType.STAR -> handleStar(leftValue, rightValue)
             TokenType.SLASH -> handleSlash(leftValue, rightValue)
 
-            TokenType.MOD -> Value.DoubleValue(leftValue.asDouble() % rightValue.asDouble())
+            TokenType.MOD -> LiteralValue.DoubleLiteralValue(leftValue.asDouble() % rightValue.asDouble())
 
-            TokenType.LESS -> Value.BooleanValue(leftValue.asDouble() < rightValue.asDouble())
-            TokenType.LESS_EQUAL -> Value.BooleanValue(leftValue.asDouble() <= rightValue.asDouble())
-            TokenType.GREATER -> Value.BooleanValue(leftValue.asDouble() > rightValue.asDouble())
-            TokenType.GREATER_EQUAL -> Value.BooleanValue(leftValue.asDouble() >= rightValue.asDouble())
-            TokenType.EQUAL_EQUAL -> Value.BooleanValue(areValuesEqual(leftValue, rightValue))
-            TokenType.BANG_EQUAL -> Value.BooleanValue(!areValuesEqual(leftValue, rightValue))
+            TokenType.LESS -> LiteralValue.BooleanLiteralValue(leftValue.asDouble() < rightValue.asDouble())
+            TokenType.LESS_EQUAL -> LiteralValue.BooleanLiteralValue(leftValue.asDouble() <= rightValue.asDouble())
+            TokenType.GREATER -> LiteralValue.BooleanLiteralValue(leftValue.asDouble() > rightValue.asDouble())
+            TokenType.GREATER_EQUAL -> LiteralValue.BooleanLiteralValue(leftValue.asDouble() >= rightValue.asDouble())
+            TokenType.EQUAL_EQUAL -> LiteralValue.BooleanLiteralValue(areValuesEqual(leftValue, rightValue))
+            TokenType.BANG_EQUAL -> LiteralValue.BooleanLiteralValue(!areValuesEqual(leftValue, rightValue))
 
-            TokenType.AND -> Value.BooleanValue(leftValue.asBoolean() && rightValue.asBoolean())
-            TokenType.OR -> Value.BooleanValue(leftValue.asBoolean() || rightValue.asBoolean())
+            TokenType.AND -> LiteralValue.BooleanLiteralValue(leftValue.asBoolean() && rightValue.asBoolean())
+            TokenType.OR -> LiteralValue.BooleanLiteralValue(leftValue.asBoolean() || rightValue.asBoolean())
 
             else -> throw EvaluateException("Unsupported binary operator: ${exp.op}")
         }
     }
 
-    private fun handlePlus(left: Value, right: Value): Value {
+    private fun handlePlus(left: LiteralValue, right: LiteralValue): LiteralValue {
         return when {
-            left is Value.DoubleValue && right is Value.DoubleValue -> {
-                Value.DoubleValue(left.value + right.value)
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value + right.value)
             }
 
-            left is Value.IntegerValue && right is Value.IntegerValue -> {
-                Value.IntegerValue(left.value + right.value)
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
+                LiteralValue.IntegerLiteralValue(left.value + right.value)
             }
 
-            left is Value.IntegerValue && right is Value.DoubleValue -> {
-                Value.DoubleValue(left.value + right.value)
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value + right.value)
             }
 
-            left is Value.DoubleValue && right is Value.IntegerValue -> {
-                Value.DoubleValue(left.value + right.value)
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value + right.value)
             }
 
-            left is Value.StringValue && right is Value.StringValue -> {
-                Value.StringValue(left.value + right.value)
+            left is LiteralValue.StringLiteralValue && right is LiteralValue.StringLiteralValue -> {
+                LiteralValue.StringLiteralValue(left.value + right.value)
             }
 
             else -> throw EvaluateException("Operands must be two numbers or two strings.")
@@ -64,94 +65,94 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
     }
 
 
-    private fun handleMinus(left: Value, right: Value): Value {
+    private fun handleMinus(left: LiteralValue, right: LiteralValue): LiteralValue {
         return when {
-            left is Value.DoubleValue && right is Value.DoubleValue -> {
-                Value.DoubleValue(left.value - right.value)
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value - right.value)
             }
 
-            left is Value.IntegerValue && right is Value.IntegerValue -> {
-                Value.IntegerValue(left.value - right.value)
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
+                LiteralValue.IntegerLiteralValue(left.value - right.value)
             }
 
-            left is Value.IntegerValue && right is Value.DoubleValue -> {
-                Value.DoubleValue(left.value - right.value)
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value - right.value)
             }
 
-            left is Value.DoubleValue && right is Value.IntegerValue -> {
-                Value.DoubleValue(left.value - right.value)
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value - right.value)
             }
 
             else -> throw EvaluateException("Operands must be numbers.")
         }
     }
 
-    private fun handleStar(left: Value, right: Value): Value {
+    private fun handleStar(left: LiteralValue, right: LiteralValue): LiteralValue {
         return when {
-            left is Value.DoubleValue && right is Value.DoubleValue -> {
-                Value.DoubleValue(left.value * right.value)
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value * right.value)
             }
 
-            left is Value.IntegerValue && right is Value.IntegerValue -> {
-                Value.IntegerValue(left.value * right.value)
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
+                LiteralValue.IntegerLiteralValue(left.value * right.value)
             }
 
-            left is Value.IntegerValue && right is Value.DoubleValue -> {
-                Value.DoubleValue(left.value * right.value)
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value * right.value)
             }
 
-            left is Value.DoubleValue && right is Value.IntegerValue -> {
-                Value.DoubleValue(left.value * right.value)
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value * right.value)
             }
 
             else -> throw EvaluateException("Operands must be numbers.")
         }
     }
 
-    private fun handleSlash(left: Value, right: Value): Value {
+    private fun handleSlash(left: LiteralValue, right: LiteralValue): LiteralValue {
         return when {
-            right is Value.DoubleValue && right.value == 0.0 -> throw EvaluateException("Division by zero")
-            right is Value.IntegerValue && right.value == 0 -> throw EvaluateException("Division by zero")
+            right is LiteralValue.DoubleLiteralValue && right.value == 0.0 -> throw EvaluateException("Division by zero")
+            right is LiteralValue.IntegerLiteralValue && right.value == 0 -> throw EvaluateException("Division by zero")
 
-            left is Value.DoubleValue && right is Value.DoubleValue -> {
-                Value.DoubleValue(left.value / right.value)
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value / right.value)
             }
 
-            left is Value.IntegerValue && right is Value.IntegerValue -> {
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
                 if (left.value % right.value == 0) {
-                    Value.IntegerValue(left.value / right.value)
+                    LiteralValue.IntegerLiteralValue(left.value / right.value)
                 } else {
-                    Value.DoubleValue(left.value.toDouble() / right.value.toDouble())
+                    LiteralValue.DoubleLiteralValue(left.value.toDouble() / right.value.toDouble())
                 }
             }
 
-            left is Value.IntegerValue && right is Value.DoubleValue -> {
-                Value.DoubleValue(left.value / right.value)
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value / right.value)
             }
 
-            left is Value.DoubleValue && right is Value.IntegerValue -> {
-                Value.DoubleValue(left.value / right.value)
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value / right.value)
             }
 
             else -> throw EvaluateException("Operands must be numbers.")
         }
     }
 
-    override fun visitUnaryExp(exp: ASTNode.Expr.UnaryExp): Value {
+    override fun visitUnaryExp(exp: ASTNode.Expr.UnaryExp): LiteralValue {
         val operandValue = exp.operand.accept(this)
         return when (exp.op) {
             TokenType.MINUS -> when (operandValue) {
-                is Value.DoubleValue -> Value.DoubleValue(-operandValue.value)
-                is Value.IntegerValue -> Value.IntegerValue(-operandValue.value)
+                is LiteralValue.DoubleLiteralValue -> LiteralValue.DoubleLiteralValue(-operandValue.value)
+                is LiteralValue.IntegerLiteralValue -> LiteralValue.IntegerLiteralValue(-operandValue.value)
                 else -> throw EvaluateException("Operand must be a number.")
             }
 
             TokenType.PLUS -> operandValue
             TokenType.BANG -> when (operandValue) {
-                is Value.BooleanValue -> Value.BooleanValue(!operandValue.value)
-                is Value.NilValue -> Value.BooleanValue(true)
-                is Value.IntegerValue -> Value.BooleanValue(false)
-                is Value.DoubleValue -> Value.BooleanValue(false)
+                is LiteralValue.BooleanLiteralValue -> LiteralValue.BooleanLiteralValue(!operandValue.value)
+                is LiteralValue.NilLiteralValue -> LiteralValue.BooleanLiteralValue(true)
+                is LiteralValue.IntegerLiteralValue -> LiteralValue.BooleanLiteralValue(false)
+                is LiteralValue.DoubleLiteralValue -> LiteralValue.BooleanLiteralValue(false)
                 else -> throw EvaluateException("Unsupported operand type for unary bang: ${operandValue::class.simpleName}")
             }
 
@@ -159,38 +160,42 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<Value> {
         }
     }
 
-    override fun visitGroupingExp(exp: ASTNode.Expr.GroupingExp): Value {
+    override fun visitGroupingExp(exp: ASTNode.Expr.GroupingExp): LiteralValue {
         return exp.expression.accept(this)
     }
 
-    override fun visitStringLiteral(exp: ASTNode.Expr.StringLiteral): Value {
-        return Value.StringValue(exp.string)
+    override fun visitStringLiteral(exp: ASTNode.Expr.StringLiteral): LiteralValue {
+        return LiteralValue.StringLiteralValue(exp.string)
     }
 
-    override fun visitBooleanLiteral(exp: ASTNode.Expr.BooleanLiteral): Value {
-        return Value.BooleanValue(exp.value)
+    override fun visitBooleanLiteral(exp: ASTNode.Expr.BooleanLiteral): LiteralValue {
+        return LiteralValue.BooleanLiteralValue(exp.value)
     }
 
-    override fun visitNilLiteral(exp: ASTNode.Expr.NilLiteral): Value {
-        return Value.NilValue
+    override fun visitNilLiteral(exp: ASTNode.Expr.NilLiteral): LiteralValue {
+        return LiteralValue.NilLiteralValue
     }
 
-    override fun visiteDoubleLiteral(exp: ASTNode.Expr.DoubleLiteral): Value {
-        return Value.DoubleValue(exp.number)
+    override fun visiteDoubleLiteral(exp: ASTNode.Expr.DoubleLiteral): LiteralValue {
+        return LiteralValue.DoubleLiteralValue(exp.number)
     }
 
-    override fun visitIntegerLiteral(exp: ASTNode.Expr.IntegerLiteral): Value {
-        return Value.IntegerValue(exp.number)
+    override fun visitIntegerLiteral(exp: ASTNode.Expr.IntegerLiteral): LiteralValue {
+        return LiteralValue.IntegerLiteralValue(exp.number)
+    }
+
+    override fun visitIdentifyExp(exp: ASTNode.Expr.IdentifyExp): LiteralValue {
+        return GlobalEnvironment.get(exp.identifier).value
     }
 
     // 辅助方法：判断两个 Value 是否相等
-    private fun areValuesEqual(a: Value, b: Value): Boolean {
+    private fun areValuesEqual(a: LiteralValue, b: LiteralValue): Boolean {
         return when {
-            a is Value.NilValue && b is Value.NilValue -> true
-            a is Value.DoubleValue && b is Value.DoubleValue -> a.value == b.value
-            a is Value.IntegerValue && b is Value.IntegerValue -> a.value == b.value
-            a is Value.BooleanValue && b is Value.BooleanValue -> a.value == b.value
-            a is Value.StringValue && b is Value.StringValue -> a.value == b.value
+            a is LiteralValue.NilLiteralValue && b is LiteralValue.NilLiteralValue -> true
+            a is LiteralValue.DoubleLiteralValue && b is LiteralValue.DoubleLiteralValue -> a.value == b.value
+            a is LiteralValue.IntegerLiteralValue && b is LiteralValue.IntegerLiteralValue -> a.value == b.value
+            a is LiteralValue.BooleanLiteralValue && b is LiteralValue.BooleanLiteralValue -> a.value == b.value
+            a is LiteralValue.StringLiteralValue && b is LiteralValue.StringLiteralValue -> a.value == b.value
             else -> false
         }
     }
