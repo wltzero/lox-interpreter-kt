@@ -146,8 +146,8 @@ sealed class ASTNode {
     }
 }
 
+class ParserException(message: String): RuntimeException(message)
 class Parser(private val iter: LookForwardIterator<ParsedToken>) {
-
     // 运算符优先级配置
     private val binaryPrecedenceMap = mapOf(
         TokenType.OR to 1,
@@ -283,7 +283,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
      */
     private fun parsePrefix(): ASTNode.Expr {
         if (!iter.hasNext()) {
-            throw RuntimeException("Unexpected end of input")
+            throw ParserException("Unexpected end of input")
         }
 
         val token = iter.cur().token
@@ -337,16 +337,16 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
 
             TokenType.STRING_UNTERMINATED -> {
                 iter.moveNext()
-                throw RuntimeException("Unterminated string")
+                throw ParserException("Unterminated string")
             }
 
             TokenType.UNEXPECTED_CHAR -> {
                 iter.moveNext()
-                throw RuntimeException("Unexpected character")
+                throw ParserException("Unexpected character")
             }
 
             else -> {
-                throw RuntimeException("Unexpected token: ${token}")
+                throw ParserException("Unexpected token: ${token}")
             }
         }
     }

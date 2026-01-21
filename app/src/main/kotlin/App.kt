@@ -2,6 +2,7 @@ import cli.EvaluateCli
 import cli.ParserCli
 import cli.StatementCli
 import cli.TokenizerCli
+import parser.ParserException
 import tokenizer.TokenizerCliStatus
 import java.io.File
 import kotlin.system.exitProcess
@@ -44,7 +45,11 @@ fun main(args: Array<String>) {
         "run" ->{
             try {
                 StatementCli.doRun(fileContents, System.out, System.err)
+            }catch (e: ParserException){
+                System.err.println(e.message)
+                exitProcess(70)
             } catch (e: RuntimeException) {
+                System.err.println(e.message)
                 exitProcess(65)
             }
         }
