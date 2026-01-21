@@ -32,7 +32,5 @@
 
 //print "hello";
 //print "world";
-(37 + 42 - 21) > (76 - 37) * 2;
-print !false;
-"baz" + "hello" + "quz" + "bar" == "bazhelloquzbar";
-print !false;
+%
+#
