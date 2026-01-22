@@ -29,7 +29,7 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
 
         val sb = StringBuilder()
         fun read(n: Int = 1) {
-            repeat (n) {
+            repeat(n) {
                 sb.append(iter.cur())
                 iter.moveNext()
             }
@@ -45,6 +45,10 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
                     while (iter.hasNext() && iter.cur() != '\n') {
                         read(1)
                     }
+                    if (iter.hasNext() && iter.cur() == '\n') {
+                        line++
+                        read(1)
+                    }
                     TokenType.COMMENT
                 } else {
                     TokenType.SLASH
@@ -53,6 +57,7 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
             '"' -> {
                 read(1)
                 while (iter.hasNext() && iter.cur() != '"') {
+                    if (iter.cur() == '\n') line++
                     read(1)
                 }
                 if (iter.hasNext()) {
@@ -81,22 +86,22 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
             }
             ' ', '\t' -> {
                 read(1)
-                while (iter.hasNext() && iter.cur() in setOf(' ', '\t', '\n')) {
+                while (iter.hasNext() && iter.cur() in setOf(' ', '\t')) {
                     read(1)
                 }
                 TokenType.SPACE
             }
             '\r' -> {
-                line++
                 read(1)
                 if (iter.hasNext() && iter.cur() == '\n') {
                     read(1)
                 }
+                line++
                 TokenType.NEWLINE
             }
             '\n' -> {
-                line++
                 read(1)
+                line++
                 TokenType.NEWLINE
             }
             '=' -> {
