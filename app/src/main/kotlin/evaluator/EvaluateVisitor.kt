@@ -34,11 +34,10 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
             TokenType.AND -> LiteralValue.BooleanLiteralValue(leftValue.asBoolean() && rightValue.asBoolean())
             TokenType.OR -> LiteralValue.BooleanLiteralValue(leftValue.asBoolean() || rightValue.asBoolean())
             TokenType.EQUAL ->{
-                // 执行二元赋值表达式逻辑
                 val rightValue = exp.right.accept(this)
                 if (exp.left is ASTNode.Expr.IdentifyExp) {
                     val varName = exp.left.identifier
-                    GlobalEnvironment.set(varName, rightValue)
+                    GlobalEnvironment.assign(varName, rightValue)
                 }
                 rightValue
             }

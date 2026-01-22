@@ -33,6 +33,20 @@ object GlobalEnvironment {
             ?: throw VariableNotFoundException("Undefined variable '$name'.")
     }
 
+    fun define(name: String, value: LiteralValue) {
+        scopeStack.last().set(name, value)
+    }
+
+    fun assign(name: String, value: LiteralValue): Boolean {
+        for (i in scopeStack.size - 1 downTo 0) {
+            if (scopeStack[i].contains(name)) {
+                scopeStack[i].set(name, value)
+                return true
+            }
+        }
+        throw VariableNotFoundException("Undefined variable '$name'.")
+    }
+
     fun set(name: String, value: LiteralValue) {
         scopeStack.last().set(name, value)
     }

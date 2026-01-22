@@ -19,7 +19,7 @@ object StatementVisitor: ASTNode.Stmt.StmtVisitor<LiteralValue> {
     }
 
     override fun visitVarStmt(stmt: ASTNode.Stmt.VarStmt) {
-        GlobalEnvironment.set(stmt.name, EvaluateVisitor.evaluate(stmt.expression))
+        GlobalEnvironment.define(stmt.name, EvaluateVisitor.evaluate(stmt.expression))
     }
 
     override fun visitBlockStmt(stmt: ASTNode.Stmt.BlockStmt): Any {
