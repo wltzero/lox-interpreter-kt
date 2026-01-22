@@ -12,7 +12,7 @@ class StatementCli {
         fun doRun(text: String, stdout: OutputStream, stderr: OutputStream){
             val tok = Tokenizer.from(text)
             val lfi = LookForwardIterator.from(tok) { it.token != TokenType.SPACE && it.token != TokenType.NEWLINE && it.token!=TokenType.COMMENT }
-            val stmts = Parser(lfi).parseStmt()
+            val stmts = Parser(lfi).parseStmts()
 
             StatementVisitor.run(stmts)
         }

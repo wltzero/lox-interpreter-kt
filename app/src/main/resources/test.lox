@@ -58,3 +58,7 @@
     }
     print hello;
 }
+{
+    var foo = 88;
+    print foo;
+}

@@ -30,11 +30,13 @@ sealed class ASTNode {
                 return visitor.visitGroupingExp(this)
             }
         }
+
         class IdentifyExp(val identifier: String) : Expr() {
             override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitIdentifyExp(this)
             }
         }
+
         class StringLiteral(val string: String) : Expr() {
             override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitStringLiteral(this)
@@ -95,7 +97,7 @@ sealed class ASTNode {
         }
 
         class VarStmt(val name: String, val expression: Expr) : Stmt() {
-            override fun accept(visitor: StmtVisitor<LiteralValue>){
+            override fun accept(visitor: StmtVisitor<LiteralValue>) {
                 return visitor.visitVarStmt(this)
             }
         }
@@ -105,6 +107,7 @@ sealed class ASTNode {
                 return visitor.visitBlockStmt(this)
             }
         }
+
         interface StmtVisitor<T> {
             fun visitExpressionStmt(stmt: ExpressionStmt): T
             fun visitPrintStmt(stmt: PrintStmt)
@@ -190,7 +193,7 @@ sealed class ASTNode {
     }
 }
 
-class ParserException(message: String): RuntimeException(message)
+class ParserException(message: String) : RuntimeException(message)
 class Parser(private val iter: LookForwardIterator<ParsedToken>) {
     // 运算符优先级配置
     private val binaryPrecedenceMap = mapOf(
@@ -225,100 +228,59 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
         return parsePrecedence(0)
     }
 
-    fun parseStmt(): List<ASTNode.Stmt> {
+    fun parseStmts(): List<ASTNode.Stmt> {
         val list = mutableListOf<ASTNode.Stmt>()
-        while (iter.hasNext()) {
-            val n = when (iter.cur().token) {
-                TokenType.PRINT -> {
-                    iter.moveNext()
-                    ASTNode.Stmt.PrintStmt(parseExpr())
-                }
-                TokenType.VAR ->{
-                    iter.moveNext()
-                    while (iter.cur().token != TokenType.IDENTIFIER) {
-                        iter.moveNext()
-                    }
-                    val name = iter.cur().stringValue
-                    iter.moveNext()
-                    // 如果有 = 则解析表达式，否则默认为 nil
-                    val stmt = if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
-                        iter.moveNext()
-                        val e = parseExpr()
-                        consume(TokenType.SEMICOLON, "Expected ';' after expression")
-                        e
-                    } else {
-                        consume(TokenType.SEMICOLON, "Expected ';' after expression")
-                        ASTNode.Expr.NilLiteral()
-                    }
-                    ASTNode.Stmt.VarStmt(name, stmt)
-                }
-                TokenType.LEFT_BRACE -> {
-                    iter.moveNext()
-                    val statements = parseBlock()
-                    ASTNode.Stmt.BlockStmt(statements)
-                }
-                TokenType.EOF -> {
-                    return list
-                }
-                else -> {
-                    ASTNode.Stmt.ExpressionStmt(parseExpr())
-                }
-            }
-            list.add(n)
+        // 遇到EOF或者右花括号后结束块解析
+        while (iter.hasNext() && iter.cur().token != TokenType.RIGHT_BRACE && iter.cur().token != TokenType.EOF) {
+            list.add(parseStatement())
         }
         return list
     }
 
-    private fun parseBlock(): List<ASTNode.Stmt> {
-        val statements = mutableListOf<ASTNode.Stmt>()
-        while (iter.hasNext() && iter.cur().token != TokenType.RIGHT_BRACE) {
-            val stmt = when (iter.cur().token) {
-                TokenType.PRINT -> {
-                    iter.moveNext()
-                    val expr = parseExpr()
-                    consume(TokenType.SEMICOLON, "Expected ';' after expression")
-                    ASTNode.Stmt.PrintStmt(expr)
-                }
-                TokenType.VAR -> {
-                    iter.moveNext()
-                    while (iter.cur().token != TokenType.IDENTIFIER) {
-                        iter.moveNext()
-                    }
-                    val name = iter.cur().stringValue
-                    iter.moveNext()
-                    val expr = if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
-                        iter.moveNext()
-                        val e = parseExpr()
-                        consume(TokenType.SEMICOLON, "Expected ';' after expression")
-                        e
-                    } else {
-                        consume(TokenType.SEMICOLON, "Expected ';' after expression")
-                        ASTNode.Expr.NilLiteral()
-                    }
-                    ASTNode.Stmt.VarStmt(name, expr)
-                }
-                TokenType.LEFT_BRACE -> {
-                    iter.moveNext()
-                    val innerBlock = parseBlock()
-                    ASTNode.Stmt.BlockStmt(innerBlock)
-                }
-                else -> {
-                    val expr = parseExpr()
-                    consume(TokenType.SEMICOLON, "Expected ';' after expression")
-                    ASTNode.Stmt.ExpressionStmt(expr)
-                }
+    private fun parseStatement(): ASTNode.Stmt {
+        return when (iter.cur().token) {
+            TokenType.PRINT -> {
+                iter.moveNext()
+                val expr = parseExpr()
+                consume(TokenType.SEMICOLON, "Expect ';' after value")
+                ASTNode.Stmt.PrintStmt(expr)
             }
-            statements.add(stmt)
-        }
-        // 消费右花括号
-        if (iter.hasNext() && iter.cur().token == TokenType.RIGHT_BRACE) {
-            iter.moveNext()
-        } else {
-            throw ParserException("Expected '}' at end of block")
-        }
-        return statements
-    }
 
+            TokenType.VAR -> {
+                iter.moveNext()
+                while (iter.cur().token != TokenType.IDENTIFIER) {
+                    iter.moveNext()
+                }
+                val name = iter.cur().stringValue
+                iter.moveNext()
+                val expr = if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
+                    // 申明后存在赋值，进行表达式解析及赋值操作
+                    iter.moveNext()
+                    val e = parseExpr()
+                    consume(TokenType.SEMICOLON, "Expect ';' after value")
+                    e
+                } else {
+                    //申明但还未初始化
+                    consume(TokenType.SEMICOLON, "Expect ';' after value")
+                    ASTNode.Expr.NilLiteral()
+                }
+                ASTNode.Stmt.VarStmt(name, expr)
+            }
+
+            TokenType.LEFT_BRACE -> {
+                iter.moveNext()
+                val statements = parseStmts()
+                consume(TokenType.RIGHT_BRACE, "Expect '}' after block")
+                ASTNode.Stmt.BlockStmt(statements)
+            }
+
+            else -> {
+                val expr = parseExpr()
+                consume(TokenType.SEMICOLON, "Expect ';' after expression")
+                ASTNode.Stmt.ExpressionStmt(expr)
+            }
+        }
+    }
 
 
     // 栈元素数据类，用于保存解析状态
@@ -335,10 +297,8 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
         var current = parsePrefix()
 
         while (true) {
-            // 如果没有下一个token或者下一个token是分号，则结束解析
             if (!iter.hasNext()) break
-            if (iter.cur().token== TokenType.SEMICOLON) {
-                iter.moveNext()
+            if (iter.cur().token == TokenType.SEMICOLON) {
                 break
             }
             val token = iter.cur().token
@@ -455,7 +415,8 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 consume(TokenType.RIGHT_PAREN, "Expected ')' after expression")
                 ASTNode.Expr.GroupingExp(expr)
             }
-            TokenType.LEFT_BRACE ->{
+
+            TokenType.LEFT_BRACE -> {
                 iter.moveNext()
                 val expr = parseExpr()
                 consume(TokenType.RIGHT_BRACE, "Expected '}' after expression")
