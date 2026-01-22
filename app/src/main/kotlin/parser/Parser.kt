@@ -453,7 +453,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
         if (iter.hasNext() && iter.cur().token == type) {
             iter.moveNext()
         } else {
-            throw RuntimeException(message)
+            throw ParserException(message)
         }
     }
 }
