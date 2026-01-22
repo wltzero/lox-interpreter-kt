@@ -99,10 +99,17 @@ sealed class ASTNode {
                 return visitor.visitVarStmt(this)
             }
         }
+
+        class BlockStmt(val statements: List<Stmt>) : Stmt() {
+            override fun accept(visitor: StmtVisitor<LiteralValue>): Any {
+                return visitor.visitBlockStmt(this)
+            }
+        }
         interface StmtVisitor<T> {
             fun visitExpressionStmt(stmt: ExpressionStmt): T
             fun visitPrintStmt(stmt: PrintStmt)
             fun visitVarStmt(stmt: VarStmt)
+            fun visitBlockStmt(stmt: BlockStmt): Any
         }
     }
 
@@ -148,6 +155,33 @@ sealed class ASTNode {
 
                 is Expr.IntegerLiteral -> {
                     writer.print("${prefix}${node.number.toDouble()}")
+                }
+
+                is Stmt.ExpressionStmt -> {
+                    writer.print("${prefix}(expression-stmt")
+                    printAst(node.expression, writer, indent + 1)
+                    writer.print(")")
+                }
+
+                is Stmt.PrintStmt -> {
+                    writer.print("${prefix}(print-stmt")
+                    printAst(node.expression, writer, indent + 1)
+                    writer.print(")")
+                }
+
+                is Stmt.VarStmt -> {
+                    writer.print("${prefix}(var-stmt ${node.name}")
+                    printAst(node.expression, writer, indent + 1)
+                    writer.print(")")
+                }
+
+                is Stmt.BlockStmt -> {
+                    writer.print("${prefix}(block")
+                    node.statements.forEach { stmt ->
+                        writer.println()
+                        printAst(stmt, writer, indent + 1)
+                    }
+                    writer.print(")")
                 }
 
                 else -> {}
@@ -209,15 +243,19 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                     // 如果有 = 则解析表达式，否则默认为 nil
                     val stmt = if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
                         iter.moveNext()
-                        parseExpr()
+                        val e = parseExpr()
+                        consume(TokenType.SEMICOLON, "Expected ';' after expression")
+                        e
                     } else {
-                        // 消费可能存在的分号
-                        if (iter.cur().token == TokenType.SEMICOLON) {
-                            iter.moveNext()
-                        }
+                        consume(TokenType.SEMICOLON, "Expected ';' after expression")
                         ASTNode.Expr.NilLiteral()
                     }
                     ASTNode.Stmt.VarStmt(name, stmt)
+                }
+                TokenType.LEFT_BRACE -> {
+                    iter.moveNext()
+                    val statements = parseBlock()
+                    ASTNode.Stmt.BlockStmt(statements)
                 }
                 TokenType.EOF -> {
                     return list
@@ -230,6 +268,58 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
         }
         return list
     }
+
+    private fun parseBlock(): List<ASTNode.Stmt> {
+        val statements = mutableListOf<ASTNode.Stmt>()
+        while (iter.hasNext() && iter.cur().token != TokenType.RIGHT_BRACE) {
+            val stmt = when (iter.cur().token) {
+                TokenType.PRINT -> {
+                    iter.moveNext()
+                    val expr = parseExpr()
+                    consume(TokenType.SEMICOLON, "Expected ';' after expression")
+                    ASTNode.Stmt.PrintStmt(expr)
+                }
+                TokenType.VAR -> {
+                    iter.moveNext()
+                    while (iter.cur().token != TokenType.IDENTIFIER) {
+                        iter.moveNext()
+                    }
+                    val name = iter.cur().stringValue
+                    iter.moveNext()
+                    val expr = if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
+                        iter.moveNext()
+                        val e = parseExpr()
+                        consume(TokenType.SEMICOLON, "Expected ';' after expression")
+                        e
+                    } else {
+                        consume(TokenType.SEMICOLON, "Expected ';' after expression")
+                        ASTNode.Expr.NilLiteral()
+                    }
+                    ASTNode.Stmt.VarStmt(name, expr)
+                }
+                TokenType.LEFT_BRACE -> {
+                    iter.moveNext()
+                    val innerBlock = parseBlock()
+                    ASTNode.Stmt.BlockStmt(innerBlock)
+                }
+                else -> {
+                    val expr = parseExpr()
+                    consume(TokenType.SEMICOLON, "Expected ';' after expression")
+                    ASTNode.Stmt.ExpressionStmt(expr)
+                }
+            }
+            statements.add(stmt)
+        }
+        // 消费右花括号
+        if (iter.hasNext() && iter.cur().token == TokenType.RIGHT_BRACE) {
+            iter.moveNext()
+        } else {
+            throw ParserException("Expected '}' at end of block")
+        }
+        return statements
+    }
+
+
 
     // 栈元素数据类，用于保存解析状态
     private data class ParseFrame(
@@ -365,6 +455,13 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 consume(TokenType.RIGHT_PAREN, "Expected ')' after expression")
                 ASTNode.Expr.GroupingExp(expr)
             }
+            TokenType.LEFT_BRACE ->{
+                iter.moveNext()
+                val expr = parseExpr()
+                consume(TokenType.RIGHT_BRACE, "Expected '}' after expression")
+                ASTNode.Expr.GroupingExp(expr)
+            }
+
             TokenType.IDENTIFIER -> {
                 iter.moveNext()
                 ASTNode.Expr.IdentifyExp(stringValue)
@@ -386,6 +483,11 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
         }
     }
 
+    /**
+     * 消费指定类型的token，如果当前token不是指定类型，则抛出异常
+     * @param [type]
+     * @param [message]
+     */
     private fun consume(type: TokenType, message: String) {
         if (iter.hasNext() && iter.cur().token == type) {
             iter.moveNext()

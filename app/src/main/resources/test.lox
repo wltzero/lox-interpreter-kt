@@ -43,9 +43,18 @@
 //var baz;
 //print baz;
 
-var a;
-var b = 2;
-var a = b = 1;
-a = 3;
-print a;
-print b;
+//var a;
+//var b = 2;
+//var a = b = 1;
+//a = 3;
+//print a;
+//print b;
+
+{
+    var hello = 88;
+    {
+        var foo = 88;
+        print foo;
+    }
+    print hello;
+}
