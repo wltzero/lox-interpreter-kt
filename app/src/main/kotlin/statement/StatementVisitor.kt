@@ -23,9 +23,11 @@ object StatementVisitor: ASTNode.Stmt.StmtVisitor<LiteralValue> {
     }
 
     override fun visitBlockStmt(stmt: ASTNode.Stmt.BlockStmt): Any {
+        GlobalEnvironment.pushScope()
         stmt.statements.forEach { node ->
             node.accept(this)
         }
+        GlobalEnvironment.popScope()
         return Unit
     }
 
