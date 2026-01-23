@@ -87,4 +87,28 @@
 //  quz = quz + 1;
 //}
 
-for (var baz = 0; baz < 3;) print baz = baz + 1;
+//for (var baz = 0; baz < 3;) print baz = baz + 1;
+
+
+
+var baz = "after";
+{
+  var baz = "before";
+
+  for (var baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+    var baz = -1;
+    print baz;
+  }
+}
+
+{
+  for (var baz = 0; baz > 0; baz = baz + 1) {}
+
+  var baz = "after";
+  print baz;
+
+  for (baz = 0; baz < 1; baz = baz + 1) {
+    print baz;
+  }
+}

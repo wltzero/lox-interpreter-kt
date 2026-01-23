@@ -60,14 +60,18 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
     override fun visitWhileStmt(stmt: ASTNode.Stmt.WhileStmt) {
         val condition = stmt.condition
         while (EvaluateVisitor.evaluate(condition).isTruthy()) {
+            GlobalEnvironment.pushScope()
             stmt.thenBranch.forEach { it.accept(this) }
+            GlobalEnvironment.popScope()
         }
     }
 
     override fun visitForStmt(stmt: ASTNode.Stmt.ForStmt) {
         stmt.initializer?.accept(this)
         while (stmt.condition?.let { EvaluateVisitor.evaluate(it).isTruthy() } ?: true) {
+            GlobalEnvironment.pushScope()
             stmt.body.forEach { it.accept(this) }
+            GlobalEnvironment.popScope()
             stmt.increment?.accept(EvaluateVisitor)
         }
     }
