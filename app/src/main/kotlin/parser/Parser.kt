@@ -244,7 +244,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
     fun parseStmts(): List<ASTNode.Stmt> {
         val list = mutableListOf<ASTNode.Stmt>()
         // 遇到EOF或者右花括号后结束块解析
-        while (iter.hasNext() && iter.cur().token != TokenType.RIGHT_BRACE && iter.cur().token != TokenType.EOF && iter.cur().token!= TokenType.ELSE) {
+        while (iter.hasNext() && iter.cur().token != TokenType.RIGHT_BRACE && iter.cur().token != TokenType.EOF) {
             list.add(parseStatement())
         }
         return list
@@ -281,6 +281,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
             }
 
             TokenType.LEFT_BRACE -> {
+                // 仅处理代表作用域的括号
                 iter.moveNext()
                 val statements = parseStmts()
                 consume(TokenType.RIGHT_BRACE, "Expect '}' after block")
@@ -288,33 +289,63 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
             }
 
             TokenType.IF -> {
-                // if
+                // if 分支
                 iter.moveNext()
                 consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'")
                 val condition = parseExpr()
                 consume(TokenType.RIGHT_PAREN, "Expect ')' after 'if'")
-                val thenBranch = parseStmts()
 
-                // else if or else
+                // 解析 then 分支
+                val thenBranch: List<ASTNode.Stmt>
+                if (iter.cur().token == TokenType.LEFT_BRACE) {
+                    iter.moveNext()
+                    val thenStatements = parseStmts()
+                    consume(TokenType.RIGHT_BRACE, "Expect '}' after if block")
+                    thenBranch = thenStatements
+                } else {
+                    // 单语句 then 分支
+                    val stmt = parseStatement()
+                    thenBranch = listOf(stmt)
+                }
+
+                // else if or else 分支
                 val elifBranches = mutableListOf<ASTNode.Stmt.ElseIfStmt>()
+                var elseBranch: List<ASTNode.Stmt>? = null
+
                 while (iter.hasNext() && iter.cur().token == TokenType.ELSE) {
                     iter.moveNext()
-                    if (iter.cur().token == TokenType.IF){
+                    if (iter.hasNext() && iter.cur().token == TokenType.IF){
                         // else if
                         iter.moveNext()
                         consume(TokenType.LEFT_PAREN, "Expect '(' after 'else if'")
-                        val condition = parseExpr()
+                        val elifCondition = parseExpr()
                         consume(TokenType.RIGHT_PAREN, "Expect ')' after 'else if'")
-                        val thenBranch = parseStmts()
-                        elifBranches.add(ASTNode.Stmt.ElseIfStmt(condition, thenBranch))
+
+                        if (iter.cur().token == TokenType.LEFT_BRACE) {
+                            iter.moveNext()
+                            val elifStatements = parseStmts()
+                            consume(TokenType.RIGHT_BRACE, "Expect '}' after else-if block")
+                            elifBranches.add(ASTNode.Stmt.ElseIfStmt(elifCondition, elifStatements))
+                        } else {
+                            val elifStmt = parseStatement()
+                            elifBranches.add(ASTNode.Stmt.ElseIfStmt(elifCondition, listOf(elifStmt)))
+                        }
                     }else{
-                        // else block and quit
-                        val elseBranch = parseStmts()
+                        // else block
+                        if (iter.cur().token == TokenType.LEFT_BRACE) {
+                            iter.moveNext()
+                            val elseStatements = parseStmts()
+                            consume(TokenType.RIGHT_BRACE, "Expect '}' after else block")
+                            elseBranch = elseStatements
+                        } else {
+                            val elseStmt = parseStatement()
+                            elseBranch = listOf(elseStmt)
+                        }
                         return ASTNode.Stmt.IfStmt(condition, thenBranch, elifBranches, elseBranch)
                     }
                 }
                 // only if and else if branches
-                ASTNode.Stmt.IfStmt(condition, thenBranch, elifBranches, null)
+                ASTNode.Stmt.IfStmt(condition, thenBranch, elifBranches, elseBranch)
             }
 
             else -> {

@@ -65,6 +65,17 @@
 
 //print nil or "ok";
 
-if (true) {print "if branch";}
-else if (true) print "else-if branch";
-else print "else branch";
+//if (true) {print "if branch";}
+//else if (true) print "else-if branch";
+//else print "else branch";
+
+var stage = "unknown";
+var age = 28;
+print age;
+if (age < 18) { stage = "child"; }
+if (age >= 18) { stage = "adult"; }
+print stage;
+var isAdult = age >= 18;
+
+if (isAdult) { print "eligible for voting"; }
+if (!isAdult) { print "not eligible for voting"; }
