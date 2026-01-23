@@ -131,6 +131,12 @@ sealed class ASTNode {
             }
         }
 
+        class ForStmt(val initializer: Stmt?, val condition: Expr?, val increment: Expr?, val body: List<Stmt>) : Stmt() {
+            override fun accept(visitor: StmtVisitor<LiteralValue>) {
+                return visitor.visitForStmt(this)
+            }
+        }
+
         interface StmtVisitor<T> {
             fun visitExpressionStmt(stmt: ExpressionStmt): T
             fun visitPrintStmt(stmt: PrintStmt)
@@ -139,6 +145,8 @@ sealed class ASTNode {
             fun visitIfStmt(stmt: IfStmt)
             fun visitElseIfStmt(stmt: ElseIfStmt): Expr.BooleanLiteral
             fun visitWhileStmt(stmt: WhileStmt)
+            fun visitForStmt(stmt: ForStmt)
+
         }
     }
 
@@ -378,7 +386,53 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 ASTNode.Stmt.WhileStmt(condition, thenBranch)
             }
 
+            TokenType.FOR -> {
+                iter.moveNext()
+                consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'")
+
+                // 处理 initializer
+                val initializer = if (iter.cur().token == TokenType.SEMICOLON) {
+                    iter.moveNext()
+                    null
+                } else {
+                    val init = parseStatement()
+                    init
+                }
+
+                // 处理 condition
+                val condition = if (iter.cur().token == TokenType.SEMICOLON) {
+                    iter.moveNext()
+                    null
+                } else {
+                    val cond = parseExpr()
+                    consume(TokenType.SEMICOLON, "Expect ';' after condition")
+                    cond
+                }
+
+                // 处理 increment
+                val increment = if (iter.cur().token == TokenType.RIGHT_PAREN) {
+                    iter.moveNext()
+                    null
+                } else {
+                    val inc = parseExpr()
+                    consume(TokenType.RIGHT_PAREN, "Expect ')' after 'for'")
+                    inc
+                }
+
+                var bodyStmt: List<ASTNode.Stmt>
+
+                if (iter.cur().token == TokenType.LEFT_BRACE) {
+                    consume(TokenType.LEFT_BRACE, "Expect '{' after while block")
+                    bodyStmt = parseStmts()
+                    consume(TokenType.RIGHT_BRACE, "Expect '}' after while block")
+                } else{
+                    bodyStmt = listOf(parseStatement())
+                }
+                ASTNode.Stmt.ForStmt(initializer, condition, increment, bodyStmt)
+            }
+
             else -> {
+                // 处理单行表达式
                 val expr = parseExpr()
                 consume(TokenType.SEMICOLON, "Expect ';' after expression")
                 ASTNode.Stmt.ExpressionStmt(expr)

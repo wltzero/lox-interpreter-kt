@@ -63,4 +63,12 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
             stmt.thenBranch.forEach { it.accept(this) }
         }
     }
+
+    override fun visitForStmt(stmt: ASTNode.Stmt.ForStmt) {
+        stmt.initializer?.accept(this)
+        while (stmt.condition?.let { EvaluateVisitor.evaluate(it).isTruthy() } ?: true) {
+            stmt.body.forEach { it.accept(this) }
+            stmt.increment?.accept(EvaluateVisitor)
+        }
+    }
 }

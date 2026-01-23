@@ -81,8 +81,10 @@
 //if (!isAdult) { print "not eligible for voting"; }
 
 
-var quz = 0;
-while (quz < 3) {
-  print quz;
-  quz = quz + 1;
-}
+//var quz = 0;
+//while (quz < 3) {
+//  print quz;
+//  quz = quz + 1;
+//}
+
+for (var baz = 0; baz < 3;) print baz = baz + 1;
