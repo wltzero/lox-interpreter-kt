@@ -4,17 +4,18 @@ import evaluator.EvaluateVisitor
 import evaluator.LiteralValue
 import parser.ASTNode
 
-object StatementVisitor: ASTNode.Stmt.StmtVisitor<LiteralValue> {
-    fun run(list: List<ASTNode.Stmt>){
-        list.forEach { node->
+object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
+    fun run(list: List<ASTNode.Stmt>) {
+        list.forEach { node ->
             node.accept(this)
         }
     }
+
     override fun visitExpressionStmt(stmt: ASTNode.Stmt.ExpressionStmt): LiteralValue {
         return EvaluateVisitor.evaluate(stmt.expression)
     }
 
-    override fun visitPrintStmt(stmt: ASTNode.Stmt.PrintStmt){
+    override fun visitPrintStmt(stmt: ASTNode.Stmt.PrintStmt) {
         println(EvaluateVisitor.evaluate(stmt.expression))
     }
 
@@ -29,6 +30,31 @@ object StatementVisitor: ASTNode.Stmt.StmtVisitor<LiteralValue> {
         }
         GlobalEnvironment.popScope()
         return Unit
+    }
+
+    override fun visitIfStmt(stmt: ASTNode.Stmt.IfStmt) {
+        val literalValue = EvaluateVisitor.evaluate(stmt.condition)
+        // 执行if
+        if (literalValue.asBoolean()) {
+            stmt.thenBranch.forEach { it.accept(this) }
+        } else {
+            // 执行else if list
+            stmt.elifBranches?.forEach { elifStmt ->
+                if (elifStmt.accept(this).value) return
+            }
+
+            // 执行else
+            stmt.elseBranch?.forEach { it.accept(this) }
+        }
+    }
+
+    override fun visitElseIfStmt(stmt: ASTNode.Stmt.ElseIfStmt): ASTNode.Expr.BooleanLiteral {
+        val doElif = EvaluateVisitor.evaluate(stmt.condition)
+        if (doElif.asBoolean()) {
+            stmt.thenBranch.forEach { it.accept(this) }
+            return ASTNode.Expr.BooleanLiteral(true)
+        }
+        return ASTNode.Expr.BooleanLiteral(false)
     }
 
 }

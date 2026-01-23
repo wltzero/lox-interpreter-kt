@@ -63,9 +63,8 @@
 //    print foo;
 //}
 
-{
-    var bar = 11;
-    var world = 11;
-    {
-        print bar + world;
-}
+//print nil or "ok";
+
+if (true) {print "if branch";}
+else if (true) print "else-if branch";
+else print "else branch";
