@@ -57,4 +57,10 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
         return ASTNode.Expr.BooleanLiteral(false)
     }
 
+    override fun visitWhileStmt(stmt: ASTNode.Stmt.WhileStmt) {
+        val condition = stmt.condition
+        while (EvaluateVisitor.evaluate(condition).isTruthy()) {
+            stmt.thenBranch.forEach { it.accept(this) }
+        }
+    }
 }

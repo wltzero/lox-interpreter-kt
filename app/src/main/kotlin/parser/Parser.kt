@@ -108,14 +108,26 @@ sealed class ASTNode {
             }
         }
 
-        class IfStmt(val condition: Expr, val thenBranch: List<Stmt>, val elifBranches: List<ElseIfStmt>?, val elseBranch: List<Stmt>?) : Stmt() {
+        class IfStmt(
+            val condition: Expr,
+            val thenBranch: List<Stmt>,
+            val elifBranches: List<ElseIfStmt>?,
+            val elseBranch: List<Stmt>?
+        ) : Stmt() {
             override fun accept(visitor: StmtVisitor<LiteralValue>) {
                 return visitor.visitIfStmt(this)
             }
         }
+
         class ElseIfStmt(val condition: Expr, val thenBranch: List<Stmt>) : Stmt() {
             override fun accept(visitor: StmtVisitor<LiteralValue>): Expr.BooleanLiteral {
                 return visitor.visitElseIfStmt(this)
+            }
+        }
+
+        class WhileStmt(val condition: Expr, val thenBranch: List<Stmt>) : Stmt() {
+            override fun accept(visitor: StmtVisitor<LiteralValue>) {
+                return visitor.visitWhileStmt(this)
             }
         }
 
@@ -126,6 +138,7 @@ sealed class ASTNode {
             fun visitBlockStmt(stmt: BlockStmt): Any
             fun visitIfStmt(stmt: IfStmt)
             fun visitElseIfStmt(stmt: ElseIfStmt): Expr.BooleanLiteral
+            fun visitWhileStmt(stmt: WhileStmt)
         }
     }
 
@@ -314,7 +327,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
 
                 while (iter.hasNext() && iter.cur().token == TokenType.ELSE) {
                     iter.moveNext()
-                    if (iter.hasNext() && iter.cur().token == TokenType.IF){
+                    if (iter.hasNext() && iter.cur().token == TokenType.IF) {
                         // else if
                         iter.moveNext()
                         consume(TokenType.LEFT_PAREN, "Expect '(' after 'else if'")
@@ -330,7 +343,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                             val elifStmt = parseStatement()
                             elifBranches.add(ASTNode.Stmt.ElseIfStmt(elifCondition, listOf(elifStmt)))
                         }
-                    }else{
+                    } else {
                         // else block
                         if (iter.cur().token == TokenType.LEFT_BRACE) {
                             iter.moveNext()
@@ -346,6 +359,23 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 }
                 // only if and else if branches
                 ASTNode.Stmt.IfStmt(condition, thenBranch, elifBranches, elseBranch)
+            }
+
+            TokenType.WHILE -> {
+                iter.moveNext()
+                consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'")
+                val condition = parseExpr()
+                consume(TokenType.RIGHT_PAREN, "Expect ')' after 'if'")
+                var thenBranch: List<ASTNode.Stmt>
+
+                if (iter.cur().token == TokenType.LEFT_BRACE) {
+                    consume(TokenType.LEFT_BRACE, "Expect '{' after while block")
+                    thenBranch = parseStmts()
+                    consume(TokenType.RIGHT_BRACE, "Expect '}' after while block")
+                } else{
+                    thenBranch = listOf(parseStatement())
+                }
+                ASTNode.Stmt.WhileStmt(condition, thenBranch)
             }
 
             else -> {

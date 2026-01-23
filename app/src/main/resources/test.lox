@@ -69,13 +69,20 @@
 //else if (true) print "else-if branch";
 //else print "else branch";
 
-var stage = "unknown";
-var age = 28;
-print age;
-if (age < 18) { stage = "child"; }
-if (age >= 18) { stage = "adult"; }
-print stage;
-var isAdult = age >= 18;
+//var stage = "unknown";
+//var age = 28;
+//print age;
+//if (age < 18) { stage = "child"; }
+//if (age >= 18) { stage = "adult"; }
+//print stage;
+//var isAdult = age >= 18;
+//
+//if (isAdult) { print "eligible for voting"; }
+//if (!isAdult) { print "not eligible for voting"; }
 
-if (isAdult) { print "eligible for voting"; }
-if (!isAdult) { print "not eligible for voting"; }
+
+var quz = 0;
+while (quz < 3) {
+  print quz;
+  quz = quz + 1;
+}
