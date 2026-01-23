@@ -28,6 +28,14 @@ sealed class LiteralValue {
         else -> throw RuntimeException("Value is not a boolean")
     }
 
+    fun isTruthy(): Boolean = when (this) {
+        is BooleanLiteralValue -> value
+        is NilLiteralValue -> false
+        else -> true
+    }
+
+    fun isFalsy(): Boolean = !isTruthy()
+
     override fun toString(): String = when (this) {
             is DoubleLiteralValue -> value.toString()
             is IntegerLiteralValue -> value.toString()

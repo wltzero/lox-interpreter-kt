@@ -35,7 +35,7 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
     override fun visitIfStmt(stmt: ASTNode.Stmt.IfStmt) {
         val literalValue = EvaluateVisitor.evaluate(stmt.condition)
         // 执行if
-        if (literalValue.asBoolean()) {
+        if (literalValue.isTruthy()) {
             stmt.thenBranch.forEach { it.accept(this) }
         } else {
             // 执行else if list
@@ -50,7 +50,7 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
 
     override fun visitElseIfStmt(stmt: ASTNode.Stmt.ElseIfStmt): ASTNode.Expr.BooleanLiteral {
         val doElif = EvaluateVisitor.evaluate(stmt.condition)
-        if (doElif.asBoolean()) {
+        if (doElif.isTruthy()) {
             stmt.thenBranch.forEach { it.accept(this) }
             return ASTNode.Expr.BooleanLiteral(true)
         }

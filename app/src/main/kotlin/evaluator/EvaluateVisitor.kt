@@ -31,8 +31,8 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
             TokenType.EQUAL_EQUAL -> LiteralValue.BooleanLiteralValue(areValuesEqual(leftValue, rightValue))
             TokenType.BANG_EQUAL -> LiteralValue.BooleanLiteralValue(!areValuesEqual(leftValue, rightValue))
 
-            TokenType.AND -> LiteralValue.BooleanLiteralValue(leftValue.asBoolean() && rightValue.asBoolean())
-            TokenType.OR -> LiteralValue.BooleanLiteralValue(leftValue.asBoolean() || rightValue.asBoolean())
+            TokenType.AND -> handleAnd(exp.left, exp.right)
+            TokenType.OR -> handleOr(exp.left, exp.right)
             TokenType.EQUAL ->{
                 val rightValue = exp.right.accept(this)
                 if (exp.left is ASTNode.Expr.IdentifyExp) {
@@ -143,6 +143,22 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
 
             else -> throw EvaluateException("Operands must be numbers.")
         }
+    }
+
+    private fun handleOr(leftExpr: ASTNode.Expr, rightExpr: ASTNode.Expr): LiteralValue {
+        val leftValue = leftExpr.accept(this)
+        if (leftValue.isTruthy()) {
+            return leftValue
+        }
+        return rightExpr.accept(this)
+    }
+
+    private fun handleAnd(leftExpr: ASTNode.Expr, rightExpr: ASTNode.Expr): LiteralValue {
+        val leftValue = leftExpr.accept(this)
+        if (leftValue.isFalsy()) {
+            return leftValue
+        }
+        return rightExpr.accept(this)
     }
 
     override fun visitUnaryExp(exp: ASTNode.Expr.UnaryExp): LiteralValue {
