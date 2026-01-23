@@ -287,18 +287,14 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 }
                 val name = iter.cur().stringValue
                 iter.moveNext()
-                val expr = if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
-                    // 申明后存在赋值，进行表达式解析及赋值操作
+                if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
                     iter.moveNext()
                     val e = parseExpr()
                     consume(TokenType.SEMICOLON, "Expect ';' after value")
-                    e
+                    ASTNode.Stmt.VarStmt(name, e)
                 } else {
-                    //申明但还未初始化
-                    consume(TokenType.SEMICOLON, "Expect ';' after value")
-                    ASTNode.Expr.NilLiteral()
+                    throw ParserException("Expect expression.")
                 }
-                ASTNode.Stmt.VarStmt(name, expr)
             }
 
             TokenType.LEFT_BRACE -> {
@@ -396,6 +392,9 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                     null
                 } else {
                     val init = parseStatement()
+                    if (init is ASTNode.Stmt.BlockStmt) {
+                        throw ParserException("Expect expression.")
+                    }
                     init
                 }
 
@@ -576,9 +575,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
 
             TokenType.LEFT_BRACE -> {
                 iter.moveNext()
-                val expr = parseExpr()
-                consume(TokenType.RIGHT_BRACE, "Expected '}' after expression")
-                ASTNode.Expr.GroupingExp(expr)
+                throw ParserException("Expect expression.")
             }
 
             TokenType.IDENTIFIER -> {
