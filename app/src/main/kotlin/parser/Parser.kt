@@ -429,11 +429,15 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 var bodyStmt: List<ASTNode.Stmt>
 
                 if (iter.cur().token == TokenType.LEFT_BRACE) {
-                    consume(TokenType.LEFT_BRACE, "Expect '{' after while block")
+                    consume(TokenType.LEFT_BRACE, "Expect '{' after for loop")
                     bodyStmt = parseStmts()
-                    consume(TokenType.RIGHT_BRACE, "Expect '}' after while block")
+                    consume(TokenType.RIGHT_BRACE, "Expect '}' after for block")
                 } else{
-                    bodyStmt = listOf(parseStatement())
+                    val body = parseStatement()
+                    if (body is ASTNode.Stmt.VarStmt) {
+                        throw ParserException("Expect expression.")
+                    }
+                    bodyStmt = listOf(body)
                 }
                 ASTNode.Stmt.ForStmt(initializer, condition, increment, bodyStmt)
             }
