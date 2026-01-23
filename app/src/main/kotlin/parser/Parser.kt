@@ -67,6 +67,12 @@ sealed class ASTNode {
             }
         }
 
+        class AssignExp(val name: String, val value: Expr) : Expr() {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
+                return visitor.visitAssignExp(this)
+            }
+        }
+
         interface ExprVisitor<T> {
             fun visitBinaryExp(exp: BinaryExp): T
             fun visitUnaryExp(exp: UnaryExp): T
@@ -77,6 +83,7 @@ sealed class ASTNode {
             fun visiteDoubleLiteral(exp: DoubleLiteral): T
             fun visitIntegerLiteral(exp: IntegerLiteral): T
             fun visitIdentifyExp(exp: IdentifyExp): T
+            fun visitAssignExp(exp: AssignExp): T
         }
     }
 
@@ -293,7 +300,8 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                     consume(TokenType.SEMICOLON, "Expect ';' after value")
                     ASTNode.Stmt.VarStmt(name, e)
                 } else {
-                    throw ParserException("Expect expression.")
+                    consume(TokenType.SEMICOLON, "Expect ';' after variable declaration")
+                    ASTNode.Stmt.VarStmt(name, ASTNode.Expr.NilLiteral())
                 }
             }
 
@@ -579,8 +587,15 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
             }
 
             TokenType.IDENTIFIER -> {
+                val name = stringValue
                 iter.moveNext()
-                ASTNode.Expr.IdentifyExp(stringValue)
+                if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
+                    iter.moveNext()
+                    val value = parseExpr()
+                    ASTNode.Expr.AssignExp(name, value)
+                } else {
+                    ASTNode.Expr.IdentifyExp(name)
+                }
             }
 
             TokenType.STRING_UNTERMINATED -> {

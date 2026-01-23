@@ -33,14 +33,6 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
 
             TokenType.AND -> handleAnd(exp.left, exp.right)
             TokenType.OR -> handleOr(exp.left, exp.right)
-            TokenType.EQUAL ->{
-                val rightValue = exp.right.accept(this)
-                if (exp.left is ASTNode.Expr.IdentifyExp) {
-                    val varName = exp.left.identifier
-                    GlobalEnvironment.assign(varName, rightValue)
-                }
-                rightValue
-            }
             else -> throw EvaluateException("Unsupported binary operator: ${exp.op}")
         }
     }
@@ -209,6 +201,12 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
 
     override fun visitIdentifyExp(exp: ASTNode.Expr.IdentifyExp): LiteralValue {
         return GlobalEnvironment.get(exp.identifier).value
+    }
+
+    override fun visitAssignExp(exp: ASTNode.Expr.AssignExp): LiteralValue {
+        val value = exp.value.accept(this)
+        GlobalEnvironment.assign(exp.name, value)
+        return value
     }
 
     // 辅助方法：判断两个 Value 是否相等
