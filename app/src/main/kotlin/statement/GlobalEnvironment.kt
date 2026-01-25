@@ -26,6 +26,7 @@ class Environment {
 
 object GlobalEnvironment {
     private val scopeStack = mutableListOf(Environment())
+    private var functionScopeBase: Int = 0
 
     init{
         registryNativeFunction("clock", emptyList(), LiteralValue.NilLiteralValue) {
@@ -45,7 +46,8 @@ object GlobalEnvironment {
     }
 
     fun get(name: String): VariableValue {
-        for (i in scopeStack.size - 1 downTo 0) {
+        val base = if (functionScopeBase > 0) functionScopeBase else scopeStack.size
+        for (i in base - 1 downTo 0) {
             if (scopeStack[i].contains(name)) {
                 return scopeStack[i].get(name)
             }
@@ -73,6 +75,14 @@ object GlobalEnvironment {
 
     fun pushScope() {
         scopeStack.add(Environment())
+    }
+
+    fun setFunctionScopeBase(base: Int) {
+        functionScopeBase = base
+    }
+
+    fun resetFunctionScopeBase() {
+        functionScopeBase = 0
     }
 
     fun popScope() {

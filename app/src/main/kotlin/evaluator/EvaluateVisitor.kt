@@ -225,12 +225,15 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
                 for (i in literal.parameters.indices) {
                     GlobalEnvironment.set(literal.parameters[i], arguments[i])
                 }
+                GlobalEnvironment.setFunctionScopeBase(1)  // 函数只访问全局作用域
                 try{
                     StatementVisitor.run(literal.body)
                 }catch (res: ReturnException){
+                    GlobalEnvironment.resetFunctionScopeBase()
                     GlobalEnvironment.popScope()
                     return res.value
                 }
+                GlobalEnvironment.resetFunctionScopeBase()
                 GlobalEnvironment.popScope()
                 LiteralValue.NilLiteralValue
             }
