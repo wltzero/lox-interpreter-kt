@@ -2,6 +2,7 @@ package parser
 
 import collections.LookForwardIterator
 import evaluator.LiteralValue
+import exception.ParserException
 import tokenizer.ParsedToken
 import tokenizer.TokenType
 
@@ -257,7 +258,6 @@ sealed class ASTNode {
     }
 }
 
-class ParserException(message: String) : RuntimeException(message)
 class Parser(private val iter: LookForwardIterator<ParsedToken>) {
     // 运算符优先级配置
     private val binaryPrecedenceMap = mapOf(
