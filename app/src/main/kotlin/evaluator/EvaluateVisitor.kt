@@ -1,5 +1,6 @@
 package evaluator
 
+import exception.EvaluateException
 import exception.ReturnException
 import parser.ASTNode
 import statement.Environment
@@ -7,7 +8,6 @@ import statement.GlobalEnvironment
 import statement.StatementVisitor
 import tokenizer.TokenType
 
-class EvaluateException(message: String): RuntimeException(message)
 
 object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
     fun evaluate(node: ASTNode.Expr): LiteralValue {
