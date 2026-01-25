@@ -121,7 +121,12 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
             }
 
             left is LiteralValue.IntegerLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
-                LiteralValue.IntegerLiteralValue(left.value / right.value)
+                val result = left.value.toDouble() / right.value.toDouble()
+                if (result == result.toLong().toDouble()) {
+                    LiteralValue.IntegerLiteralValue(result.toInt())
+                } else {
+                    LiteralValue.DoubleLiteralValue(result)
+                }
             }
 
             left is LiteralValue.IntegerLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
