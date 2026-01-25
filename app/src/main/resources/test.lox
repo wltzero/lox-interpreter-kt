@@ -138,6 +138,15 @@
 //var c = fooo(10,11);
 //print c;
 
-print "the expression below is invalid";
-26 + "bar";
-print "this should not be printed";
+//print "the expression below is invalid";
+//26 + "bar";
+//print "this should not be printed";
+fun makeGreeter() {
+  fun greet(name) {
+    print "Hello " + name;
+  }
+  return greet;
+}
+
+var sayHello = makeGreeter();
+sayHello("Bob");

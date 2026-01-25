@@ -74,7 +74,7 @@ sealed class ASTNode {
             }
         }
 
-        class CallExp(val func: String, val arguments: List<Expr>) : Expr() {
+        class CallExp(val callee: Expr, val arguments: List<Expr>) : Expr() {
             override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitCallExp(this)
             }
@@ -524,6 +524,22 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
             if (iter.cur().token == TokenType.SEMICOLON || iter.cur().token == TokenType.COMMA) {
                 break
             }
+            
+            // 处理函数调用：(expr)(args)
+            if (iter.cur().token == TokenType.LEFT_PAREN) {
+                iter.moveNext()
+                val args = mutableListOf<ASTNode.Expr>()
+                while (iter.cur().token != TokenType.RIGHT_PAREN) {
+                    args.add(parseExpr())
+                    if (iter.cur().token != TokenType.RIGHT_PAREN) {
+                        consume(TokenType.COMMA, "Expect ',' between arguments")
+                    }
+                }
+                consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments")
+                current = ASTNode.Expr.CallExp(current, args)
+                continue
+            }
+            
             val token = iter.cur().token
             val precedence = binaryPrecedenceMap[token] ?: break
 
@@ -660,7 +676,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                         }
                     }
                     consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments")
-                    ASTNode.Expr.CallExp(stringValue, args)
+                    ASTNode.Expr.CallExp(ASTNode.Expr.IdentifyExp(stringValue), args)
                 } else {
                     ASTNode.Expr.IdentifyExp(stringValue)
                 }

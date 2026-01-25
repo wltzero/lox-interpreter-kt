@@ -214,8 +214,9 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
     }
 
     override fun visitCallExp(exp: ASTNode.Expr.CallExp): LiteralValue {
+        val calleeValue = exp.callee.accept(this)
         val arguments = exp.arguments.map { it.accept(this) }
-        return when (val literal = GlobalEnvironment.getFunction(exp.func)) {
+        return when (val literal = calleeValue) {
             is LiteralValue.FunctionLiteralValue -> {
                 GlobalEnvironment.pushScope()
                 for (i in literal.parameters.indices) {
