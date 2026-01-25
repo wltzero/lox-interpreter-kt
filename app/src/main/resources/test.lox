@@ -134,6 +134,10 @@
 //foo(10,11);
 //foo(11,1);
 
-fun fooo(a,b) {return a+b;}
-var c = fooo(10,11);
-print c;
+//fun fooo(a,b) {return a+b;}
+//var c = fooo(10,11);
+//print c;
+
+print "the expression below is invalid";
+26 + "bar";
+print "this should not be printed";

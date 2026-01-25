@@ -48,8 +48,8 @@ sealed class LiteralValue {
             is BooleanLiteralValue -> value.toString()
             NilLiteralValue -> "nil"
             is IdentifierLiteralValue -> name
-            is NativeFunctionLiteralValue -> "fn $name"
-            is FunctionLiteralValue -> "fn $name"
+            is NativeFunctionLiteralValue -> "<fn $name>"
+            is FunctionLiteralValue -> "<fn $name>"
         }
 
 }
