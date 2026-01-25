@@ -204,12 +204,12 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
     }
 
     override fun visitIdentifyExp(exp: ASTNode.Expr.IdentifyExp): LiteralValue {
-        return GlobalEnvironment.get(exp.identifier).value
+        return GlobalEnvironment.getWithClosure(exp.identifier).value
     }
 
     override fun visitAssignExp(exp: ASTNode.Expr.AssignExp): LiteralValue {
         val value = exp.value.accept(this)
-        GlobalEnvironment.assign(exp.name, value)
+        GlobalEnvironment.assignWithClosure(exp.name, value)
         return value
     }
 
@@ -221,17 +221,32 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
                 if (arguments.size != literal.parameters.size) {
                     throw EvaluateException("Expected ${literal.parameters.size} arguments but got ${arguments.size}.")
                 }
+
+                val callerBlockDepth = GlobalEnvironment.getBlockDepth()
+                val useClosure = literal.capturedEnvironment != null && callerBlockDepth > literal.definitionBlockDepth
+
+                if (useClosure) {
+                    GlobalEnvironment.setClosureEnv(literal.capturedEnvironment)
+                }
+
                 GlobalEnvironment.pushScope()
                 for (i in literal.parameters.indices) {
-                    GlobalEnvironment.set(literal.parameters[i], arguments[i])
+                    GlobalEnvironment.define(literal.parameters[i], arguments[i])
                 }
-                try{
+
+                try {
                     StatementVisitor.run(literal.body)
-                }catch (res: ReturnException){
+                } catch (res: ReturnException) {
                     GlobalEnvironment.popScope()
+                    if (useClosure) {
+                        GlobalEnvironment.setClosureEnv(null)
+                    }
                     return res.value
                 }
                 GlobalEnvironment.popScope()
+                if (useClosure) {
+                    GlobalEnvironment.setClosureEnv(null)
+                }
                 LiteralValue.NilLiteralValue
             }
             is LiteralValue.NativeFunctionLiteralValue ->{

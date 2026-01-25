@@ -4,8 +4,8 @@ import evaluator.LiteralValue
 import exception.VariableNotFoundException
 import parser.ASTNode
 
-class Environment {
-    private val map: MutableMap<String, VariableValue> = mutableMapOf()
+class Environment: Cloneable {
+    val map: MutableMap<String, VariableValue> = mutableMapOf()
 
     fun get(name: String): VariableValue {
         return map[name] ?: throw VariableNotFoundException("Undefined variable '$name'.")
@@ -16,16 +16,12 @@ class Environment {
     }
 
     fun contains(name: String): Boolean = map.containsKey(name)
-
-    fun remove(name: String) = map.remove(name)
-
-    fun isEmpty() = map.isEmpty()
-
-    fun size() = map.size
 }
 
 object GlobalEnvironment {
     private val scopeStack = mutableListOf(Environment())
+    private var blockDepth = 0
+    private var closureEnv: Environment? = null
 
     init{
         registryNativeFunction("clock", emptyList(), LiteralValue.NilLiteralValue) {
@@ -33,15 +29,25 @@ object GlobalEnvironment {
         }
     }
 
-    fun registryNativeFunction(name:String, parameters:List<String>, res: LiteralValue,funtion: (List<LiteralValue>)-> LiteralValue){
-        set(name, LiteralValue.NativeFunctionLiteralValue(name, parameters, res, funtion))
+    fun registryNativeFunction(name:String, parameters:List<String>, res: LiteralValue, function: (List<LiteralValue>)-> LiteralValue){
+        define(name, LiteralValue.NativeFunctionLiteralValue(name, parameters, res, function))
     }
 
     fun registryFunction(name: String, parameters: List<String>, body: List<ASTNode.Stmt>) {
-        set(name, LiteralValue.FunctionLiteralValue(name, parameters, body))
+        val capturedEnv = captureCurrentEnvironment()
+        define(name, LiteralValue.FunctionLiteralValue(name, parameters, body, capturedEnv, blockDepth))
     }
-    fun getFunction(name: String): LiteralValue? {
-        return get(name).value
+
+    private fun captureCurrentEnvironment(): Environment {
+        val env = Environment()
+        for (i in scopeStack.size - 1 downTo 0) {
+            scopeStack[i].map.forEach { (key, value) ->
+                if (!env.contains(key)) {
+                    env.set(key, value.value)
+                }
+            }
+        }
+        return env
     }
 
     fun get(name: String): VariableValue {
@@ -67,10 +73,6 @@ object GlobalEnvironment {
         throw VariableNotFoundException("Undefined variable '$name'.")
     }
 
-    fun set(name: String, value: LiteralValue) {
-        scopeStack.last().set(name, value)
-    }
-
     fun pushScope() {
         scopeStack.add(Environment())
     }
@@ -81,14 +83,36 @@ object GlobalEnvironment {
         }
     }
 
-    fun currentScope(): Environment = scopeStack.last()
-
-    fun clear() {
-        scopeStack.clear()
-        scopeStack.add(Environment())
+    fun enterBlock() {
+        blockDepth++
     }
 
-    fun size() = scopeStack.last().size()
+    fun exitBlock() {
+        if (blockDepth > 0) {
+            blockDepth--
+        }
+    }
 
-    fun contains(key: String) = scopeStack.last().contains(key)
+    fun getBlockDepth(): Int = blockDepth
+
+    fun setClosureEnv(env: Environment?) {
+        closureEnv = env
+    }
+
+    fun getClosureEnv(): Environment? = closureEnv
+
+    fun getWithClosure(name: String): VariableValue {
+        if (closureEnv != null && closureEnv!!.contains(name)) {
+            return closureEnv!!.get(name)
+        }
+        return get(name)
+    }
+
+    fun assignWithClosure(name: String, value: LiteralValue): Boolean {
+        if (closureEnv != null && closureEnv!!.contains(name)) {
+            closureEnv!!.set(name, value)
+            return true
+        }
+        return assign(name, value)
+    }
 }

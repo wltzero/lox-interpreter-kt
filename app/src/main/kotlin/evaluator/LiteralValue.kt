@@ -1,6 +1,7 @@
 package evaluator
 
 import parser.ASTNode
+import statement.Environment
 
 sealed class LiteralValue {
     class DoubleLiteralValue(val value: Double) : LiteralValue()
@@ -10,7 +11,13 @@ sealed class LiteralValue {
     object NilLiteralValue : LiteralValue()
     class IdentifierLiteralValue(val name: String) : LiteralValue()
     class NativeFunctionLiteralValue(val name:String, val parameters:List<String>, val res: LiteralValue,val function: (List<LiteralValue>)-> LiteralValue) : LiteralValue()
-    class FunctionLiteralValue(val name:String, val parameters:List<String>, val body: List<ASTNode.Stmt>) : LiteralValue()
+    class FunctionLiteralValue(
+        val name: String,
+        val parameters: List<String>,
+        val body: List<ASTNode.Stmt>,
+        val capturedEnvironment: Environment? = null,
+        val definitionBlockDepth: Int = 0
+    ) : LiteralValue()
 
 
     fun asDouble(): Double = when (this) {
