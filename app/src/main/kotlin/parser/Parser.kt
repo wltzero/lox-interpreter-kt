@@ -487,9 +487,13 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
 
             TokenType.RETURN -> {
                 iter.moveNext()
-                val stmt = ASTNode.Stmt.ReturnStmt(parseExpr())
+                val value = if (iter.cur().token == TokenType.SEMICOLON) {
+                    ASTNode.Expr.NilLiteral()
+                } else {
+                    parseExpr()
+                }
                 consume(TokenType.SEMICOLON, "Expect ';' after return statement")
-                stmt
+                ASTNode.Stmt.ReturnStmt(value)
             }
 
             else -> {
