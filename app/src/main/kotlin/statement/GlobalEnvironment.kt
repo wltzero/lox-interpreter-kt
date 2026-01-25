@@ -1,8 +1,8 @@
 package statement
 
 import evaluator.LiteralValue
-
-class VariableNotFoundException(message: String): RuntimeException(message)
+import exception.VariableNotFoundException
+import parser.ASTNode
 
 class Environment {
     private val map: MutableMap<String, VariableValue> = mutableMapOf()
@@ -26,6 +26,23 @@ class Environment {
 
 object GlobalEnvironment {
     private val scopeStack = mutableListOf(Environment())
+
+    init{
+        registryNativeFunction("clock", emptyList(), LiteralValue.NilLiteralValue) {
+            LiteralValue.IntegerLiteralValue((System.currentTimeMillis() / 1000).toInt())
+        }
+    }
+
+    fun registryNativeFunction(name:String, parameters:List<String>, res: LiteralValue,funtion: (List<LiteralValue>)-> LiteralValue){
+        set(name, LiteralValue.NativeFunctionLiteralValue(name, parameters, res, funtion))
+    }
+
+    fun registryFunction(name: String, parameters: List<String>, body: List<ASTNode.Stmt>) {
+        set(name, LiteralValue.FunctionLiteralValue(name, parameters, body))
+    }
+    fun getFunction(name: String): LiteralValue? {
+        return get(name).value
+    }
 
     fun get(name: String): VariableValue {
         return scopeStack.reversed().firstOrNull { it.contains(name) }

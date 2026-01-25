@@ -1,7 +1,10 @@
 package evaluator
 
+import exception.ReturnException
 import parser.ASTNode
+import statement.Environment
 import statement.GlobalEnvironment
+import statement.StatementVisitor
 import tokenizer.TokenType
 
 class EvaluateException(message: String): RuntimeException(message)
@@ -118,11 +121,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
             }
 
             left is LiteralValue.IntegerLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
-                if (left.value % right.value == 0) {
-                    LiteralValue.IntegerLiteralValue(left.value / right.value)
-                } else {
-                    LiteralValue.DoubleLiteralValue(left.value.toDouble() / right.value.toDouble())
-                }
+                LiteralValue.IntegerLiteralValue(left.value / right.value)
             }
 
             left is LiteralValue.IntegerLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
@@ -207,6 +206,30 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
         val value = exp.value.accept(this)
         GlobalEnvironment.assign(exp.name, value)
         return value
+    }
+
+    override fun visitCallExp(exp: ASTNode.Expr.CallExp): LiteralValue {
+        val arguments = exp.arguments.map { it.accept(this) }
+        return when (val literal = GlobalEnvironment.getFunction(exp.func)) {
+            is LiteralValue.FunctionLiteralValue -> {
+                GlobalEnvironment.pushScope()
+                for (i in literal.parameters.indices) {
+                    GlobalEnvironment.set(literal.parameters[i], arguments[i])
+                }
+                try{
+                    StatementVisitor.run(literal.body)
+                }catch (res: ReturnException){
+                    return res.value
+                }
+                GlobalEnvironment.popScope()
+                LiteralValue.NilLiteralValue
+            }
+            is LiteralValue.NativeFunctionLiteralValue ->{
+                val res = literal.function.invoke(arguments)
+                res
+            }
+            else -> throw EvaluateException("Can only call functions.")
+        }
     }
 
     // 辅助方法：判断两个 Value 是否相等

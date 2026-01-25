@@ -2,9 +2,9 @@ import cli.EvaluateCli
 import cli.ParserCli
 import cli.StatementCli
 import cli.TokenizerCli
-import evaluator.EvaluateException
-import parser.ParserException
-import statement.VariableNotFoundException
+import exception.EvaluateException
+import exception.ParserException
+import exception.VariableNotFoundException
 import tokenizer.TokenizerCliStatus
 import java.io.File
 import kotlin.system.exitProcess

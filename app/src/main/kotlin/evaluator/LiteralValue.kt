@@ -1,5 +1,7 @@
 package evaluator
 
+import parser.ASTNode
+
 sealed class LiteralValue {
     class DoubleLiteralValue(val value: Double) : LiteralValue()
     class IntegerLiteralValue(val value: Int) : LiteralValue()
@@ -7,6 +9,9 @@ sealed class LiteralValue {
     class BooleanLiteralValue(val value: Boolean) : LiteralValue()
     object NilLiteralValue : LiteralValue()
     class IdentifierLiteralValue(val name: String) : LiteralValue()
+    class NativeFunctionLiteralValue(val name:String, val parameters:List<String>, val res: LiteralValue,val function: (List<LiteralValue>)-> LiteralValue) : LiteralValue()
+    class FunctionLiteralValue(val name:String, val parameters:List<String>, val body: List<ASTNode.Stmt>) : LiteralValue()
+
 
     fun asDouble(): Double = when (this) {
         is DoubleLiteralValue -> value
@@ -43,6 +48,8 @@ sealed class LiteralValue {
             is BooleanLiteralValue -> value.toString()
             NilLiteralValue -> "nil"
             is IdentifierLiteralValue -> name
+            is NativeFunctionLiteralValue -> "fn $name"
+            is FunctionLiteralValue -> "fn $name"
         }
 
 }

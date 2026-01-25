@@ -73,6 +73,12 @@ sealed class ASTNode {
             }
         }
 
+        class CallExp(val func: String, val arguments: List<Expr>) : Expr() {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
+                return visitor.visitCallExp(this)
+            }
+        }
+
         interface ExprVisitor<T> {
             fun visitBinaryExp(exp: BinaryExp): T
             fun visitUnaryExp(exp: UnaryExp): T
@@ -84,6 +90,7 @@ sealed class ASTNode {
             fun visitIntegerLiteral(exp: IntegerLiteral): T
             fun visitIdentifyExp(exp: IdentifyExp): T
             fun visitAssignExp(exp: AssignExp): T
+            fun visitCallExp(exp: CallExp): T
         }
     }
 
@@ -138,11 +145,26 @@ sealed class ASTNode {
             }
         }
 
-        class ForStmt(val initializer: Stmt?, val condition: Expr?, val increment: Expr?, val body: List<Stmt>) : Stmt() {
+        class ForStmt(
+            val initializer: Stmt?, val condition: Expr?, val increment: Expr?, val body: List<Stmt>
+        ) : Stmt() {
             override fun accept(visitor: StmtVisitor<LiteralValue>) {
                 return visitor.visitForStmt(this)
             }
         }
+
+        class FunctionStmt(val name: String, val parameters: List<String>, val body: List<Stmt>): Stmt() {
+            override fun accept(visitor: StmtVisitor<LiteralValue>) {
+                return visitor.visitFunStmt(this)
+            }
+        }
+
+        class ReturnStmt(val value: Expr) : Stmt() {
+            override fun accept(visitor: StmtVisitor<LiteralValue>): LiteralValue {
+                return visitor.visitReturnStmt(this)
+            }
+        }
+
 
         interface StmtVisitor<T> {
             fun visitExpressionStmt(stmt: ExpressionStmt): T
@@ -153,7 +175,8 @@ sealed class ASTNode {
             fun visitElseIfStmt(stmt: ElseIfStmt): Expr.BooleanLiteral
             fun visitWhileStmt(stmt: WhileStmt)
             fun visitForStmt(stmt: ForStmt)
-
+            fun visitFunStmt(stmt: FunctionStmt)
+            fun visitReturnStmt(stmt: ReturnStmt): LiteralValue
         }
     }
 
@@ -384,7 +407,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                     consume(TokenType.LEFT_BRACE, "Expect '{' after while block")
                     thenBranch = parseStmts()
                     consume(TokenType.RIGHT_BRACE, "Expect '}' after while block")
-                } else{
+                } else {
                     thenBranch = listOf(parseStatement())
                 }
                 ASTNode.Stmt.WhileStmt(condition, thenBranch)
@@ -432,7 +455,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                     consume(TokenType.LEFT_BRACE, "Expect '{' after for loop")
                     bodyStmt = parseStmts()
                     consume(TokenType.RIGHT_BRACE, "Expect '}' after for block")
-                } else{
+                } else {
                     val body = parseStatement()
                     if (body is ASTNode.Stmt.VarStmt) {
                         throw ParserException("Expect expression.")
@@ -440,6 +463,33 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                     bodyStmt = listOf(body)
                 }
                 ASTNode.Stmt.ForStmt(initializer, condition, increment, bodyStmt)
+            }
+
+            TokenType.FUN -> {
+                iter.moveNext()
+                val functionName = iter.cur().stringValue
+                iter.moveNext()
+                consume(TokenType.LEFT_PAREN, "Expect '(' after function name")
+                val params = mutableListOf<String>()
+                while (iter.cur().token != TokenType.RIGHT_PAREN) {
+                    params.add(iter.cur().stringValue)
+                    consume(TokenType.IDENTIFIER, "Expect parameter name")
+                    if (iter.cur().token != TokenType.RIGHT_PAREN) {
+                        consume(TokenType.COMMA, "Expect ',' between parameters")
+                    }
+                }
+                consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters")
+                consume(TokenType.LEFT_BRACE, "Expect '{' before function body")
+                val body = parseStmts()
+                consume(TokenType.RIGHT_BRACE, "Expect '}' after function body")
+                ASTNode.Stmt.FunctionStmt(functionName, params, body)
+            }
+
+            TokenType.RETURN -> {
+                iter.moveNext()
+                val stmt = ASTNode.Stmt.ReturnStmt(parseExpr())
+                consume(TokenType.SEMICOLON, "Expect ';' after return statement")
+                stmt
             }
 
             else -> {
@@ -467,7 +517,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
 
         while (true) {
             if (!iter.hasNext()) break
-            if (iter.cur().token == TokenType.SEMICOLON) {
+            if (iter.cur().token == TokenType.SEMICOLON || iter.cur().token == TokenType.COMMA) {
                 break
             }
             val token = iter.cur().token
@@ -591,14 +641,24 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
             }
 
             TokenType.IDENTIFIER -> {
-                val name = stringValue
                 iter.moveNext()
                 if (iter.hasNext() && iter.cur().token == TokenType.EQUAL) {
                     iter.moveNext()
                     val value = parseExpr()
-                    ASTNode.Expr.AssignExp(name, value)
+                    ASTNode.Expr.AssignExp(stringValue, value)
+                } else if (iter.hasNext() && iter.cur().token == TokenType.LEFT_PAREN) {
+                    iter.moveNext()
+                    val args = mutableListOf<ASTNode.Expr>()
+                    while (iter.cur().token != TokenType.RIGHT_PAREN) {
+                        args.add(parseExpr())
+                        if (iter.cur().token != TokenType.RIGHT_PAREN) {
+                            consume(TokenType.COMMA, "Expect ',' between arguments")
+                        }
+                    }
+                    consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments")
+                    ASTNode.Expr.CallExp(stringValue, args)
                 } else {
-                    ASTNode.Expr.IdentifyExp(name)
+                    ASTNode.Expr.IdentifyExp(stringValue)
                 }
             }
 

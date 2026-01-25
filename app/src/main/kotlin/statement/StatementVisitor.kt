@@ -2,6 +2,7 @@ package statement
 
 import evaluator.EvaluateVisitor
 import evaluator.LiteralValue
+import exception.ReturnException
 import parser.ASTNode
 
 object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
@@ -74,5 +75,13 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
             GlobalEnvironment.popScope()
             stmt.increment?.accept(EvaluateVisitor)
         }
+    }
+
+    override fun visitFunStmt(stmt: ASTNode.Stmt.FunctionStmt) {
+        GlobalEnvironment.registryFunction(stmt.name, stmt.parameters, stmt.body)
+    }
+
+    override fun visitReturnStmt(stmt: ASTNode.Stmt.ReturnStmt): LiteralValue {
+        throw ReturnException(EvaluateVisitor.evaluate(stmt.value))
     }
 }
