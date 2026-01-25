@@ -218,6 +218,9 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
         val arguments = exp.arguments.map { it.accept(this) }
         return when (val literal = calleeValue) {
             is LiteralValue.FunctionLiteralValue -> {
+                if (arguments.size != literal.parameters.size) {
+                    throw EvaluateException("Expected ${literal.parameters.size} arguments but got ${arguments.size}.")
+                }
                 GlobalEnvironment.pushScope()
                 for (i in literal.parameters.indices) {
                     GlobalEnvironment.set(literal.parameters[i], arguments[i])
@@ -232,6 +235,9 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
                 LiteralValue.NilLiteralValue
             }
             is LiteralValue.NativeFunctionLiteralValue ->{
+                if (arguments.size != literal.parameters.size) {
+                    throw EvaluateException("Expected ${literal.parameters.size} arguments but got ${arguments.size}.")
+                }
                 val res = literal.function.invoke(arguments)
                 res
             }
