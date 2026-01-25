@@ -224,6 +224,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
                 try{
                     StatementVisitor.run(literal.body)
                 }catch (res: ReturnException){
+                    GlobalEnvironment.popScope()
                     return res.value
                 }
                 GlobalEnvironment.popScope()

@@ -45,9 +45,12 @@ object GlobalEnvironment {
     }
 
     fun get(name: String): VariableValue {
-        return scopeStack.reversed().firstOrNull { it.contains(name) }
-            ?.get(name)
-            ?: throw VariableNotFoundException("Undefined variable '$name'.")
+        for (i in scopeStack.size - 1 downTo 0) {
+            if (scopeStack[i].contains(name)) {
+                return scopeStack[i].get(name)
+            }
+        }
+        throw VariableNotFoundException("Undefined variable '$name'.")
     }
 
     fun define(name: String, value: LiteralValue) {
