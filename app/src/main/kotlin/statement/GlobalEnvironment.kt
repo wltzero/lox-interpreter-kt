@@ -4,7 +4,7 @@ import evaluator.LiteralValue
 import exception.VariableNotFoundException
 import parser.ASTNode
 
-class Environment: Cloneable {
+data class Environment(val parent: Environment? = null) {
     val map: MutableMap<String, VariableValue> = mutableMapOf()
 
     fun get(name: String): VariableValue {
@@ -20,8 +20,6 @@ class Environment: Cloneable {
 
 object GlobalEnvironment {
     private val scopeStack = mutableListOf(Environment())
-    private var blockDepth = 0
-    private var closureEnv: Environment? = null
 
     init{
         registryNativeFunction("clock", emptyList(), LiteralValue.NilLiteralValue) {
@@ -34,23 +32,27 @@ object GlobalEnvironment {
     }
 
     fun registryFunction(name: String, parameters: List<String>, body: List<ASTNode.Stmt>) {
-        val capturedEnv = captureCurrentEnvironment()
-        define(name, LiteralValue.FunctionLiteralValue(name, parameters, body, capturedEnv, blockDepth))
+        /*捕获闭包*/
+        val capturedEnv = currentEnvironment()
+        define(name, LiteralValue.FunctionLiteralValue(name, parameters, body, capturedEnv))
     }
 
-    private fun captureCurrentEnvironment(): Environment {
-        val env = Environment()
-        for (i in scopeStack.size - 1 downTo 0) {
-            scopeStack[i].map.forEach { (key, value) ->
-                if (!env.contains(key)) {
-                    env.set(key, value.value)
-                }
-            }
-        }
-        return env
+    private fun currentEnvironment(): Environment {
+        return scopeStack.last()
     }
 
     fun get(name: String): VariableValue {
+        /*从当前作用域开始，逐层向上查找变量*/
+        var env: Environment = currentEnvironment()
+        while(true){
+            if (env.contains(name)) {
+                return env.get(name)
+            }
+            if(env.parent==null){
+                break
+            }
+            env = env.parent
+        }
         for (i in scopeStack.size - 1 downTo 0) {
             if (scopeStack[i].contains(name)) {
                 return scopeStack[i].get(name)
@@ -64,6 +66,17 @@ object GlobalEnvironment {
     }
 
     fun assign(name: String, value: LiteralValue): Boolean {
+        var env: Environment = currentEnvironment()
+        while(true){
+            if (env.contains(name)) {
+                env.set(name, value)
+                return true
+            }
+            if(env.parent==null){
+                break
+            }
+            env = env.parent
+        }
         for (i in scopeStack.size - 1 downTo 0) {
             if (scopeStack[i].contains(name)) {
                 scopeStack[i].set(name, value)
@@ -74,7 +87,13 @@ object GlobalEnvironment {
     }
 
     fun pushScope() {
-        scopeStack.add(Environment())
+        val newEnv = Environment(scopeStack.last())
+        scopeStack.add(newEnv)
+    }
+
+    fun pushScopeWith(env: Environment){
+        val newEnv = Environment(env)
+        scopeStack.add(newEnv)
     }
 
     fun popScope() {
@@ -83,36 +102,4 @@ object GlobalEnvironment {
         }
     }
 
-    fun enterBlock() {
-        blockDepth++
-    }
-
-    fun exitBlock() {
-        if (blockDepth > 0) {
-            blockDepth--
-        }
-    }
-
-    fun getBlockDepth(): Int = blockDepth
-
-    fun setClosureEnv(env: Environment?) {
-        closureEnv = env
-    }
-
-    fun getClosureEnv(): Environment? = closureEnv
-
-    fun getWithClosure(name: String): VariableValue {
-        if (closureEnv != null && closureEnv!!.contains(name)) {
-            return closureEnv!!.get(name)
-        }
-        return get(name)
-    }
-
-    fun assignWithClosure(name: String, value: LiteralValue): Boolean {
-        if (closureEnv != null && closureEnv!!.contains(name)) {
-            closureEnv!!.set(name, value)
-            return true
-        }
-        return assign(name, value)
-    }
 }

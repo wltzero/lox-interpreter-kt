@@ -204,12 +204,12 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
     }
 
     override fun visitIdentifyExp(exp: ASTNode.Expr.IdentifyExp): LiteralValue {
-        return GlobalEnvironment.getWithClosure(exp.identifier).value
+        return GlobalEnvironment.get(exp.identifier).value
     }
 
     override fun visitAssignExp(exp: ASTNode.Expr.AssignExp): LiteralValue {
         val value = exp.value.accept(this)
-        GlobalEnvironment.assignWithClosure(exp.name, value)
+        GlobalEnvironment.assign(exp.name, value)
         return value
     }
 
@@ -222,14 +222,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
                     throw EvaluateException("Expected ${literal.parameters.size} arguments but got ${arguments.size}.")
                 }
 
-                val callerBlockDepth = GlobalEnvironment.getBlockDepth()
-                val useClosure = literal.capturedEnvironment != null && callerBlockDepth > literal.definitionBlockDepth
-
-                if (useClosure) {
-                    GlobalEnvironment.setClosureEnv(literal.capturedEnvironment)
-                }
-
-                GlobalEnvironment.pushScope()
+                literal.capturedEnvironment?.let { GlobalEnvironment.pushScopeWith(it) }
                 for (i in literal.parameters.indices) {
                     GlobalEnvironment.define(literal.parameters[i], arguments[i])
                 }
@@ -238,15 +231,9 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
                     StatementVisitor.run(literal.body)
                 } catch (res: ReturnException) {
                     GlobalEnvironment.popScope()
-                    if (useClosure) {
-                        GlobalEnvironment.setClosureEnv(null)
-                    }
                     return res.value
                 }
                 GlobalEnvironment.popScope()
-                if (useClosure) {
-                    GlobalEnvironment.setClosureEnv(null)
-                }
                 LiteralValue.NilLiteralValue
             }
             is LiteralValue.NativeFunctionLiteralValue ->{

@@ -15,8 +15,7 @@ sealed class LiteralValue {
         val name: String,
         val parameters: List<String>,
         val body: List<ASTNode.Stmt>,
-        val capturedEnvironment: Environment? = null,
-        val definitionBlockDepth: Int = 0
+        val capturedEnvironment: Environment? = null
     ) : LiteralValue()
 
 
