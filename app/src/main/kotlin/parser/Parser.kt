@@ -349,7 +349,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                     iter.moveNext()
                     val thenStatements = parseStmts()
                     consume(TokenType.RIGHT_BRACE, "Expect '}' after if block")
-                    thenBranch = listOf(ASTNode.Stmt.BlockStmt(thenStatements))
+                    thenBranch = thenStatements
                 } else {
                     // 单语句 then 分支
                     val stmt = parseStatement()
@@ -373,12 +373,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                             iter.moveNext()
                             val elifStatements = parseStmts()
                             consume(TokenType.RIGHT_BRACE, "Expect '}' after else-if block")
-                            elifBranches.add(
-                                ASTNode.Stmt.ElseIfStmt(
-                                    elifCondition,
-                                    listOf(ASTNode.Stmt.BlockStmt(elifStatements))
-                                )
-                            )
+                            elifBranches.add(ASTNode.Stmt.ElseIfStmt(elifCondition, elifStatements))
                         } else {
                             val elifStmt = parseStatement()
                             elifBranches.add(ASTNode.Stmt.ElseIfStmt(elifCondition, listOf(elifStmt)))
@@ -389,7 +384,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                             iter.moveNext()
                             val elseStatements = parseStmts()
                             consume(TokenType.RIGHT_BRACE, "Expect '}' after else block")
-                            elseBranch = listOf(ASTNode.Stmt.BlockStmt(elseStatements))
+                            elseBranch = elseStatements
                         } else {
                             val elseStmt = parseStatement()
                             elseBranch = listOf(elseStmt)
@@ -410,9 +405,8 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
 
                 if (iter.cur().token == TokenType.LEFT_BRACE) {
                     consume(TokenType.LEFT_BRACE, "Expect '{' after while block")
-                    val whileStatements = parseStmts()
+                    thenBranch = parseStmts()
                     consume(TokenType.RIGHT_BRACE, "Expect '}' after while block")
-                    thenBranch = listOf(ASTNode.Stmt.BlockStmt(whileStatements))
                 } else {
                     thenBranch = listOf(parseStatement())
                 }
@@ -459,9 +453,8 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
 
                 if (iter.cur().token == TokenType.LEFT_BRACE) {
                     consume(TokenType.LEFT_BRACE, "Expect '{' after for loop")
-                    val bodyStatements = parseStmts()
+                    bodyStmt = parseStmts()
                     consume(TokenType.RIGHT_BRACE, "Expect '}' after for block")
-                    bodyStmt = listOf(ASTNode.Stmt.BlockStmt(bodyStatements))
                 } else {
                     val body = parseStatement()
                     if (body is ASTNode.Stmt.VarStmt) {
