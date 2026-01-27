@@ -4,6 +4,7 @@ import cli.StatementCli
 import cli.TokenizerCli
 import exception.EvaluateException
 import exception.ParserException
+import exception.ResolutionException
 import exception.VariableNotFoundException
 import tokenizer.TokenizerCliStatus
 import java.io.File
@@ -48,6 +49,9 @@ fun main(args: Array<String>) {
             try {
                 StatementCli.doRun(fileContents, System.out, System.err)
             } catch (e: ParserException){
+                System.err.println(e.message)
+                exitProcess(65)
+            } catch (e: ResolutionException) {
                 System.err.println(e.message)
                 exitProcess(65)
             } catch (e: EvaluateException) {

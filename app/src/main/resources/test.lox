@@ -142,47 +142,47 @@
 //26 + "bar";
 //print "this should not be printed";
 
-var a = 38;
-
-fun printAndModify() {
-  print a;
-  var a = 95;
-  print a;
-}
-
-print a;
-a = 68;
-printAndModify();
-
-
-var count = 3;
-
-fun tick() {
-  if (count > 0) {
-    print count;
-    count = count - 1;
-    return false;
-  }
-  print "Blast off!";
-  return true;
-}
-
-while (!tick()) {}
-
-
-var counter = 89;
-
-fun incrementCounter(amount) {
-  counter = counter + amount;
-  print counter;
-}
-
-{
-  counter = 83;
-  incrementCounter(6);
-  print counter;
-}
-print counter;
+//var a = 38;
+//
+//fun printAndModify() {
+//  print a;
+//  var a = 95;
+//  print a;
+//}
+//
+//print a;
+//a = 68;
+//printAndModify();
+//
+//
+//var count = 3;
+//
+//fun tick() {
+//  if (count > 0) {
+//    print count;
+//    count = count - 1;
+//    return false;
+//  }
+//  print "Blast off!";
+//  return true;
+//}
+//
+//while (!tick()) {}
+//
+//
+//var counter = 89;
+//
+//fun incrementCounter(amount) {
+//  counter = counter + amount;
+//  print counter;
+//}
+//
+//{
+//  counter = 83;
+//  incrementCounter(6);
+//  print counter;
+//}
+//print counter;
 
 
 //var x = 1;
@@ -237,3 +237,18 @@ print counter;
 //var counter = makeCounter();
 //counter(); // "1".
 //counter(); // "2".
+
+
+var variable = "global";
+
+{
+  fun f() {
+    print variable;
+  }
+
+  f();
+
+  var variable = "local";
+
+  f();
+}

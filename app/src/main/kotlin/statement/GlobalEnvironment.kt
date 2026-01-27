@@ -41,6 +41,30 @@ object GlobalEnvironment {
         return scopeStack.last()
     }
 
+    private fun ancestor(distance: Int): Environment {
+        var env = currentEnvironment()
+        repeat(distance) {
+            env = env.parent ?: env
+        }
+        return env
+    }
+
+    fun getAt(distance: Int, name: String): VariableValue {
+        return ancestor(distance).get(name)
+    }
+
+    fun assignAt(distance: Int, name: String, value: LiteralValue) {
+        ancestor(distance).set(name, value)
+    }
+
+    fun getGlobal(name: String): VariableValue {
+        return scopeStack.first().get(name)
+    }
+
+    fun assignGlobal(name: String, value: LiteralValue) {
+        scopeStack.first().set(name, value)
+    }
+
     fun get(name: String): VariableValue {
         /*从当前作用域开始，逐层向上查找变量*/
         var env: Environment = currentEnvironment()

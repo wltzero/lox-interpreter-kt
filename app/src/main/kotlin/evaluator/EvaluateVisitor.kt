@@ -10,8 +10,15 @@ import tokenizer.TokenType
 
 
 object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
+    private val locals: MutableMap<ASTNode.Expr, Int> = mutableMapOf()
+
     fun evaluate(node: ASTNode.Expr): LiteralValue {
         return node.accept(this)
+    }
+
+    fun setLocals(localsMap: Map<ASTNode.Expr, Int>) {
+        locals.clear()
+        locals.putAll(localsMap)
     }
 
 
@@ -204,12 +211,22 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
     }
 
     override fun visitIdentifyExp(exp: ASTNode.Expr.IdentifyExp): LiteralValue {
-        return GlobalEnvironment.get(exp.identifier).value
+        val distance = locals[exp]
+        return if (distance != null) {
+            GlobalEnvironment.getAt(distance, exp.identifier).value
+        } else {
+            GlobalEnvironment.getGlobal(exp.identifier).value
+        }
     }
 
     override fun visitAssignExp(exp: ASTNode.Expr.AssignExp): LiteralValue {
         val value = exp.value.accept(this)
-        GlobalEnvironment.assign(exp.name, value)
+        val distance = locals[exp]
+        if (distance != null) {
+            GlobalEnvironment.assignAt(distance, exp.name, value)
+        } else {
+            GlobalEnvironment.assignGlobal(exp.name, value)
+        }
         return value
     }
 
