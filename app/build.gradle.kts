@@ -21,6 +21,15 @@ repositories {
 }
 
 dependencies {
+    // JUnit 5 测试框架
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
+    
+    // Kotlin Test 扩展
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    
+    // 用于捕获系统输出的库
+    testImplementation("com.github.stefanbirkner:system-rules:1.19.0")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -33,4 +42,12 @@ java {
 application {
     // Define the main class for the application.
     mainClass.set("AppKt")
+}
+
+// 配置测试任务
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
 }
