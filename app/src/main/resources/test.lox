@@ -256,46 +256,74 @@
 
 
 
-var x = 1;
-var y = 2;
+//var x = 1;
+//var y = 2;
+//
+//fun printBoth() {
+//  if (x < y) {
+//    print "x is less than y:";
+//    print x;
+//    print y;
+//  } else {
+//    print "x is not less than y:";
+//    print x;
+//    print y;
+//  }
+//}
+//
+//{
+//  var x = 10;
+//  {
+//    var y = 20;
+//
+//    var i = 0;
+//    while (i < 3) {
+//      x = x + 1;
+//      y = y - 1;
+//      print "Local x: ";
+//      print x;
+//      print "Local y: ";
+//      print y;
+//      i = i + 1;
+//    }
+//
+//    if (x > y) {
+//      print "Local x > y";
+//    }
+//
+//    printBoth();
+//  }
+//}
+//
+//if (x == 1 and y == 2) {
+//  print "Globals unchanged:";
+//  printBoth();
+//}
 
-fun printBoth() {
-  if (x < y) {
-    print "x is less than y:";
-    print x;
-    print y;
-  } else {
-    print "x is not less than y:";
-    print x;
-    print y;
+
+fun makeFilter() {
+  fun filter(n) {
+    if (n < 58) {
+      return false;
+    }
+    return true;
+  }
+  return filter;
+}
+
+// This function applies a function to a list of
+// numbers
+fun applyToNumbers(f, count) {
+  var n = 0;
+  while (n < count) {
+    if (f(n)) {
+      print n;
+    }
+    n = n + 1;
   }
 }
 
-{
-  var x = 10;
-  {
-    var y = 20;
+var greaterThanX = makeFilter();
 
-    var i = 0;
-    while (i < 3) {
-      x = x + 1;
-      y = y - 1;
-      print "Local x: ";
-      print x;
-      print "Local y: ";
-      print y;
-      i = i + 1;
-    }
-
-    if (x > y) {
-      print "Local x > y";
-    }
-
-    printBoth();
-  }
-}
-
-if (x == 1 and y == 2) {
-  print "Globals unchanged:";
-  printBoth();
-}
+print "Numbers >= 58:";
+applyToNumbers(greaterThanX, 58 + 3);
