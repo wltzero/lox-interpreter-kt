@@ -136,7 +136,7 @@ class LoxScriptTest {
 
         // 使用断言验证结果
         LoxAssertions.assertSuccess(result)
-//        LoxAssertions.assertOutputLineCount(result, 3)
-//        LoxAssertions.assertOutputEquals(result, "1\r\n2\r\n3")
+        LoxAssertions.assertOutputLineCount(result, 4)
+        LoxAssertions.assertOutputEquals(result, "0\r\n-1\r\nafter\r\n0")
     }
 }

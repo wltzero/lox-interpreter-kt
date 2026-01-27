@@ -69,7 +69,10 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
         GlobalEnvironment.pushScope()
         stmt.initializer?.accept(this)
         while (stmt.condition?.let { EvaluateVisitor.evaluate(it).isTruthy() } ?: true) {
+            // 为循环体创建嵌套作用域
+            GlobalEnvironment.pushScope()
             stmt.body.forEach { it.accept(this) }
+            GlobalEnvironment.popScope()
             stmt.increment?.accept(EvaluateVisitor)
         }
         GlobalEnvironment.popScope()

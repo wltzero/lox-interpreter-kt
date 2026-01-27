@@ -90,7 +90,12 @@ class Resolver {
         stmt.initializer?.let { resolveStmt(it) }
         stmt.condition?.let { resolveExpr(it) }
         stmt.increment?.let { resolveExpr(it) }
+        
+        // 为循环体创建嵌套作用域
+        beginScope()
         stmt.body.forEach { resolveStmt(it) }
+        endScope()
+        
         endScope()
     }
 
