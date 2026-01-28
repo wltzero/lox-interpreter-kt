@@ -95,6 +95,9 @@ class Resolver {
 
         val enclosingClass = currentClass
         if (stmt.superclass != null) {
+            if (stmt.superclass.identifier == stmt.name) {
+                throw ResolutionException("[line ${stmt.superclass.line}] A class can't inherit from itself.")
+            }
             currentClass = ClassType.SUBCLASS
             resolveExpr(stmt.superclass)
         } else {

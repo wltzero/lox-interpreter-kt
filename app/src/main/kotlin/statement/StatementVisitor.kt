@@ -98,7 +98,7 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
                 superclass = superclassValue
             } else {
                 val line = stmt.superclass.line
-                throw ResolutionException("[line $line] Superclass must be a class.")
+                throw EvaluateException("[line $line] Superclass must be a class.")
             }
         }
 

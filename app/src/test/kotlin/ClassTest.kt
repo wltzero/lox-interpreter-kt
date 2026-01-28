@@ -804,7 +804,7 @@ class ClassTest {
         val result = testRunner.run(myScript)
 
         LoxAssertions.assertFailure(result, 70)
-        LoxAssertions.assertErrorContains(result, "Superclass must be a class.")
+        LoxAssertions.assertErrorContains(result, "Superclass must be a class")
     }
 
     @Test
@@ -821,7 +821,20 @@ class ClassTest {
         val result = testRunner.run(myScript)
 
         LoxAssertions.assertFailure(result, 70)
-        LoxAssertions.assertErrorContains(result, "Superclass must be a class.")
+        LoxAssertions.assertErrorContains(result, "Superclass must be a class")
+    }
+
+    @Test
+    fun `Classes - Inheritance - self inheritance`() {
+        val myScript = """
+            // A class can't inherit from itself.
+            class Foo < Foo {} // expect compile error
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result, 65)
+        LoxAssertions.assertErrorContains(result, "A class can't inherit from itself.")
     }
 
     @Test
