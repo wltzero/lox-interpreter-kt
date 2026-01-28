@@ -85,4 +85,20 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
     override fun visitReturnStmt(stmt: ASTNode.Stmt.ReturnStmt): LiteralValue {
         throw ReturnException(EvaluateVisitor.evaluate(stmt.value))
     }
+
+    override fun visitClassStmt(stmt: ASTNode.Stmt.ClassStmt) {
+        GlobalEnvironment.define(stmt.name, LiteralValue.NilLiteralValue)
+
+        val methods = mutableMapOf<String, LiteralValue.FunctionLiteralValue>()
+        for (method in stmt.methods) {
+            methods[method.name] = LiteralValue.FunctionLiteralValue(
+                method.name,
+                method.parameters,
+                method.body,
+                null
+            )
+        }
+
+        GlobalEnvironment.assign(stmt.name, LiteralValue.ClassLiteralValue(stmt.name, methods))
+    }
 }

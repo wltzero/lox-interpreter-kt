@@ -1,4 +1,4 @@
-package testutil
+package utils
 
 import cli.EvaluateCli
 import cli.ParserCli
@@ -12,7 +12,7 @@ import java.io.PrintStream
  * Lox脚本测试运行器
  * 提供统一的接口来执行Lox脚本并捕获输出结果
  */
-class TestRunner {
+object TestRunner {
     
     /**
      * 执行Lox脚本并返回结果

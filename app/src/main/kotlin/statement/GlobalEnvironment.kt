@@ -32,17 +32,16 @@ object GlobalEnvironment {
     }
 
     fun registryFunction(name: String, parameters: List<String>, body: List<ASTNode.Stmt>) {
-        /*捕获闭包*/
-        val capturedEnv = currentEnvironment()
+        val capturedEnv = getCurrentEnvironment()
         define(name, LiteralValue.FunctionLiteralValue(name, parameters, body, capturedEnv))
     }
 
-    private fun currentEnvironment(): Environment {
+    private fun getCurrentEnvironment(): Environment {
         return scopeStack.last()
     }
 
     private fun ancestor(distance: Int): Environment {
-        var env = currentEnvironment()
+        var env = getCurrentEnvironment()
         repeat(distance) {
             env = env.parent ?: env
         }
@@ -66,8 +65,7 @@ object GlobalEnvironment {
     }
 
     fun get(name: String): VariableValue {
-        /*从当前作用域开始，逐层向上查找变量*/
-        var env: Environment = currentEnvironment()
+        var env: Environment = getCurrentEnvironment()
         while(true){
             if (env.contains(name)) {
                 return env.get(name)
@@ -90,7 +88,7 @@ object GlobalEnvironment {
     }
 
     fun assign(name: String, value: LiteralValue): Boolean {
-        var env: Environment = currentEnvironment()
+        var env: Environment = getCurrentEnvironment()
         while(true){
             if (env.contains(name)) {
                 env.set(name, value)

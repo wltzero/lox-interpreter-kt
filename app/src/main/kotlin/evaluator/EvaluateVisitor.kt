@@ -260,7 +260,65 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
                 val res = literal.function.invoke(arguments)
                 res
             }
-            else -> throw EvaluateException("Can only call functions.")
+            is LiteralValue.ClassLiteralValue -> {
+                val instance = LiteralValue.InstanceLiteralValue(literal)
+                literal.methods["init"]?.let { initializer ->
+                    GlobalEnvironment.pushScope()
+                    GlobalEnvironment.define("this", instance)
+                    try {
+                        StatementVisitor.run(initializer.body)
+                    } catch (res: ReturnException) {
+                        GlobalEnvironment.popScope()
+                        return res.value
+                    }
+                    GlobalEnvironment.popScope()
+                }
+                instance
+            }
+            else -> throw EvaluateException("Can only call functions or classes.")
+        }
+    }
+
+    override fun visitGetExpr(exp: ASTNode.Expr.GetExpr): LiteralValue {
+        val obj = exp.obj.accept(this)
+        return when (val literal = obj) {
+            is LiteralValue.InstanceLiteralValue -> {
+                if (literal.fields.containsKey(exp.name)) {
+                    literal.fields[exp.name]!!
+                } else if (literal.klass.methods.containsKey(exp.name)) {
+                    // Return a bound method
+                    val method = literal.klass.methods[exp.name]!!
+                    val capturedEnv = method.capturedEnvironment
+                    val boundEnv = statement.Environment(capturedEnv)
+                    boundEnv.set("this", literal)
+                    LiteralValue.FunctionLiteralValue(method.name, method.parameters, method.body, boundEnv)
+                } else {
+                    literal.fields[exp.name] = LiteralValue.NilLiteralValue
+                    LiteralValue.NilLiteralValue
+                }
+            }
+            else -> throw EvaluateException("Only instances have properties.")
+        }
+    }
+
+    override fun visitSetExpr(exp: ASTNode.Expr.SetExpr): LiteralValue {
+        val obj = exp.obj.accept(this)
+        val value = exp.value.accept(this)
+        return when (val literal = obj) {
+            is LiteralValue.InstanceLiteralValue -> {
+                literal.fields[exp.name] = value
+                value
+            }
+            else -> throw EvaluateException("Only instances have fields.")
+        }
+    }
+
+    override fun visitThisExpr(exp: ASTNode.Expr.ThisExpr): LiteralValue {
+        val distance = locals[exp]
+        return if (distance != null) {
+            GlobalEnvironment.getAt(distance, "this").value
+        } else {
+            GlobalEnvironment.getGlobal("this").value
         }
     }
 

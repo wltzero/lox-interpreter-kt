@@ -7,10 +7,17 @@ class Resolver {
     private val scopeStack = mutableListOf<MutableMap<String, Boolean>>()
     private val locals = mutableMapOf<ASTNode.Expr, Int>()
     private var currentFunction = FunctionType.NONE
+    private var currentClass = ClassType.NONE
 
     private enum class FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        METHOD
+    }
+
+    private enum class ClassType {
+        NONE,
+        CLASS
     }
 
     fun resolve(statements: List<ASTNode.Stmt>) {
@@ -31,6 +38,7 @@ class Resolver {
             is ASTNode.Stmt.ForStmt -> resolveForStmt(stmt)
             is ASTNode.Stmt.FunctionStmt -> resolveFunctionStmt(stmt)
             is ASTNode.Stmt.ReturnStmt -> resolveReturnStmt(stmt)
+            is ASTNode.Stmt.ClassStmt -> resolveClassStmt(stmt)
         }
     }
 
@@ -48,12 +56,43 @@ class Resolver {
                 resolveExpr(expr.callee)
                 expr.arguments.forEach { resolveExpr(it) }
             }
+            is ASTNode.Expr.GetExpr -> resolveExpr(expr.obj)
+            is ASTNode.Expr.SetExpr -> {
+                resolveExpr(expr.obj)
+                resolveExpr(expr.value)
+            }
+            is ASTNode.Expr.ThisExpr -> resolveThis(expr)
             is ASTNode.Expr.StringLiteral,
             is ASTNode.Expr.BooleanLiteral,
             is ASTNode.Expr.NilLiteral,
             is ASTNode.Expr.DoubleLiteral,
             is ASTNode.Expr.IntegerLiteral -> Unit
         }
+    }
+
+    private fun resolveThis(expr: ASTNode.Expr.ThisExpr) {
+        if (currentClass == ClassType.NONE) {
+            throw ResolutionException("Can't use 'this' outside of a class.")
+        }
+        resolveLocal(expr, "this")
+    }
+
+    private fun resolveClassStmt(stmt: ASTNode.Stmt.ClassStmt) {
+        declare(stmt.name)
+        define(stmt.name)
+
+        val enclosingClass = currentClass
+        currentClass = ClassType.CLASS
+
+        beginScope()
+        scopeStack.last()["this"] = true
+
+        for (method in stmt.methods) {
+            resolveFunction(method.parameters, method.body)
+        }
+
+        endScope()
+        currentClass = enclosingClass
     }
 
     private fun resolveVarStmt(stmt: ASTNode.Stmt.VarStmt) {

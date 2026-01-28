@@ -18,6 +18,16 @@ sealed class LiteralValue {
         val capturedEnvironment: Environment? = null
     ) : LiteralValue()
 
+    class ClassLiteralValue(
+        val name: String,
+        val methods: Map<String, FunctionLiteralValue>
+    ) : LiteralValue()
+
+    class InstanceLiteralValue(
+        val klass: ClassLiteralValue,
+        val fields: MutableMap<String, LiteralValue> = mutableMapOf()
+    ) : LiteralValue()
+
 
     fun asDouble(): Double = when (this) {
         is DoubleLiteralValue -> value
@@ -56,6 +66,8 @@ sealed class LiteralValue {
             is IdentifierLiteralValue -> name
             is NativeFunctionLiteralValue -> "<fn $name>"
             is FunctionLiteralValue -> "<fn $name>"
+            is ClassLiteralValue -> name
+            is InstanceLiteralValue -> "${klass.name} instance"
         }
 
 }

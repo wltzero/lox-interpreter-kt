@@ -1,10 +1,10 @@
 import org.junit.jupiter.api.Test
-import testutil.LoxAssertions
-import testutil.TestRunner
+import utils.LoxAssertions
+import utils.TestRunner
 
-class LoxScriptTest {
+class ResolveTest {
 
-    private val testRunner = TestRunner()
+    private val testRunner = TestRunner
 
     @Test
     fun `Resolving & Binding - 1`() {
@@ -139,4 +139,6 @@ class LoxScriptTest {
         LoxAssertions.assertOutputLineCount(result, 4)
         LoxAssertions.assertOutputEquals(result, "0\r\n-1\r\nafter\r\n0")
     }
+
+
 }

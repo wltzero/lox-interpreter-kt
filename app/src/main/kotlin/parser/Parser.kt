@@ -80,6 +80,24 @@ sealed class ASTNode {
             }
         }
 
+        class GetExpr(val obj: Expr, val name: String) : Expr() {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
+                return visitor.visitGetExpr(this)
+            }
+        }
+
+        class SetExpr(val obj: Expr, val name: String, val value: Expr) : Expr() {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
+                return visitor.visitSetExpr(this)
+            }
+        }
+
+        class ThisExpr : Expr() {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
+                return visitor.visitThisExpr(this)
+            }
+        }
+
         interface ExprVisitor<T> {
             fun visitBinaryExp(exp: BinaryExp): T
             fun visitUnaryExp(exp: UnaryExp): T
@@ -92,6 +110,9 @@ sealed class ASTNode {
             fun visitIdentifyExp(exp: IdentifyExp): T
             fun visitAssignExp(exp: AssignExp): T
             fun visitCallExp(exp: CallExp): T
+            fun visitGetExpr(exp: GetExpr): T
+            fun visitSetExpr(exp: SetExpr): T
+            fun visitThisExpr(exp: ThisExpr): T
         }
     }
 
@@ -166,6 +187,12 @@ sealed class ASTNode {
             }
         }
 
+        class ClassStmt(val name: String, val methods: List<FunctionStmt>) : Stmt() {
+            override fun accept(visitor: StmtVisitor<LiteralValue>) {
+                return visitor.visitClassStmt(this)
+            }
+        }
+
 
         interface StmtVisitor<T> {
             fun visitExpressionStmt(stmt: ExpressionStmt): T
@@ -178,6 +205,7 @@ sealed class ASTNode {
             fun visitForStmt(stmt: ForStmt)
             fun visitFunStmt(stmt: FunctionStmt)
             fun visitReturnStmt(stmt: ReturnStmt): LiteralValue
+            fun visitClassStmt(stmt: ClassStmt)
         }
     }
 
@@ -496,6 +524,30 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 ASTNode.Stmt.ReturnStmt(value)
             }
 
+            TokenType.CLASS -> {
+                iter.moveNext()
+                val className = iter.cur().stringValue
+                consume(TokenType.IDENTIFIER, "Expect class name.")
+                consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
+
+                val methods = mutableListOf<ASTNode.Stmt.FunctionStmt>()
+                while (iter.cur().token != TokenType.RIGHT_BRACE && iter.hasNext()) {
+                    if (iter.cur().token == TokenType.FUN) {
+                        iter.moveNext()
+                        val method = parseFunction("method")
+                        methods.add(method)
+                    } else if (iter.cur().token == TokenType.IDENTIFIER) {
+                        val method = parseFunction("method")
+                        methods.add(method)
+                    } else {
+                        iter.moveNext()
+                    }
+                }
+                consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
+
+                ASTNode.Stmt.ClassStmt(className, methods)
+            }
+
             else -> {
                 // 处理单行表达式
                 val expr = parseExpr()
@@ -539,7 +591,24 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 current = ASTNode.Expr.CallExp(current, args)
                 continue
             }
-            
+
+            // 处理属性访问：obj.property
+            if (iter.cur().token == TokenType.DOT) {
+                iter.moveNext()
+                val propertyName = iter.cur().stringValue
+                consume(TokenType.IDENTIFIER, "Expect property name after '.'")
+                current = ASTNode.Expr.GetExpr(current, propertyName)
+                continue
+            }
+
+            // 处理属性赋值：obj.property = value
+            if (iter.cur().token == TokenType.EQUAL && current is ASTNode.Expr.GetExpr) {
+                iter.moveNext()
+                val value = parsePrecedence(0)
+                current = ASTNode.Expr.SetExpr(current.obj, current.name, value)
+                continue
+            }
+
             val token = iter.cur().token
             val precedence = binaryPrecedenceMap[token] ?: break
 
@@ -682,6 +751,11 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 }
             }
 
+            TokenType.THIS -> {
+                iter.moveNext()
+                ASTNode.Expr.ThisExpr()
+            }
+
             TokenType.STRING_UNTERMINATED -> {
                 iter.moveNext()
                 throw ParserException("Unterminated string")
@@ -709,5 +783,24 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
         } else {
             throw ParserException(message)
         }
+    }
+
+    private fun parseFunction(kind: String): ASTNode.Stmt.FunctionStmt {
+        val functionName = iter.cur().stringValue
+        iter.moveNext()
+        consume(TokenType.LEFT_PAREN, "Expect '(' after $kind name")
+        val params = mutableListOf<String>()
+        while (iter.cur().token != TokenType.RIGHT_PAREN) {
+            params.add(iter.cur().stringValue)
+            consume(TokenType.IDENTIFIER, "Expect parameter name")
+            if (iter.cur().token != TokenType.RIGHT_PAREN) {
+                consume(TokenType.COMMA, "Expect ',' between parameters")
+            }
+        }
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters")
+        consume(TokenType.LEFT_BRACE, "Expect '{' before $kind body")
+        val body = parseStmts()
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after $kind body")
+        return ASTNode.Stmt.FunctionStmt(functionName, params, body)
     }
 }
