@@ -1,10 +1,17 @@
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import statement.GlobalEnvironment
 import utils.LoxAssertions
 import utils.TestRunner
 
 class ResolveTest {
 
     private val testRunner = TestRunner
+
+    @BeforeEach
+    fun setUp() {
+        GlobalEnvironment.reset()
+    }
 
     @Test
     fun `Resolving & Binding - 1`() {

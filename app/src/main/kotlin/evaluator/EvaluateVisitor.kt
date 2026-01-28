@@ -293,8 +293,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
                     boundEnv.set("this", literal)
                     LiteralValue.FunctionLiteralValue(method.name, method.parameters, method.body, boundEnv)
                 } else {
-                    literal.fields[exp.name] = LiteralValue.NilLiteralValue
-                    LiteralValue.NilLiteralValue
+                    throw EvaluateException("Undefined property '${exp.name}'.")
                 }
             }
             else -> throw EvaluateException("Only instances have properties.")
@@ -318,7 +317,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
         return if (distance != null) {
             GlobalEnvironment.getAt(distance, "this").value
         } else {
-            GlobalEnvironment.getGlobal("this").value
+            throw EvaluateException("Can't use 'this' outside of a class.")
         }
     }
 

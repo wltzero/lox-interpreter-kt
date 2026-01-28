@@ -1,10 +1,17 @@
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import statement.GlobalEnvironment
 import utils.LoxAssertions
 import utils.TestRunner
 
 
 class ClassTest {
     private val testRunner = TestRunner
+
+    @BeforeEach
+    fun setUp() {
+        GlobalEnvironment.reset()
+    }
 
     @Test
     fun `Classes - Declearation - 1`() {
@@ -320,5 +327,142 @@ class ClassTest {
         LoxAssertions.assertSuccess(result)
         LoxAssertions.assertOutputLineCount(result, 1)
         LoxAssertions.assertOutputEquals(result, "Using power: Flight")
+    }
+
+    @Test
+    fun `Classes - This - 1`() {
+        val myScript = """
+            class Calculator {
+              add(a, b) {
+                return a + b + this.memory;
+              }
+            }
+            
+            var calc = Calculator();
+            calc.memory = 82;
+            print calc.add(92, 1);
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 1)
+        LoxAssertions.assertOutputEquals(result, "175")
+    }
+
+    @Test
+    fun `Classes - This - 2`() {
+        val myScript = """
+            class Animal {
+              makeSound() {
+                print this.sound;
+              }
+              identify() {
+                print this.species;
+              }
+            }
+            
+            var dog = Animal();
+            dog.sound = "Woof";
+            dog.species = "Dog";
+            
+            var cat = Animal();
+            cat.sound = "Meow";
+            cat.species = "Cat";
+            
+            // Swap methods between instances
+            cat.makeSound = dog.makeSound;
+            dog.identify = cat.identify;
+            
+            cat.makeSound();
+            dog.identify();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 2)
+        LoxAssertions.assertOutputEquals(result, "Woof\r\nCat")
+    }
+
+    @Test
+    fun `Classes - This - 3`() {
+        val myScript = """
+            class Wizard {
+              getSpellCaster() {
+                fun castSpell() {
+                  print this;
+                  print "Casting spell as " + this.name;
+                }
+            
+                return castSpell;
+              }
+            }
+            
+            var wizard = Wizard();
+            wizard.name = "Merlin";
+            wizard.getSpellCaster()();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 2)
+        LoxAssertions.assertOutputEquals(result, "Wizard instance\r\nCasting spell as Merlin")
+    }
+
+    @Test
+    fun `Classes - Invalid usages of This - 1`() {
+        val myScript = """
+            fun notAMethod() {
+              print this;
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Can't use 'this' outside of a class.")
+    }
+
+    @Test
+    fun `Classes - Invalid usages of This - 2`() {
+        val myScript = """
+            class Person {
+              sayName() {
+                print this();
+              }
+            }
+            Person().sayName();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Can only call functions or classes.")
+    }
+
+    @Test
+    fun `Classes - Invalid usages of This - 3`() {
+        val myScript = """
+            class Confused {
+              method() {
+                fun inner(instance) {
+                  var feeling = "confused";
+                  print this.feeling;
+                }
+                return inner;
+              }
+            }
+            
+            var instance = Confused();
+            var m = instance.method();
+            m(instance);
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Undefined property 'feeling'.")
     }
 }

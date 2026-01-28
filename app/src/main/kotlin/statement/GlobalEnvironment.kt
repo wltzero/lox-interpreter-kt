@@ -124,4 +124,12 @@ object GlobalEnvironment {
         }
     }
 
+    fun reset() {
+        scopeStack.clear()
+        scopeStack.add(Environment())
+        registryNativeFunction("clock", emptyList(), LiteralValue.NilLiteralValue) {
+            LiteralValue.IntegerLiteralValue((System.currentTimeMillis() / 1000).toInt())
+        }
+    }
+
 }
