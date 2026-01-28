@@ -20,6 +20,7 @@ sealed class LiteralValue {
 
     class ClassLiteralValue(
         val name: String,
+        val superclass: ClassLiteralValue?,
         val methods: Map<String, FunctionLiteralValue>
     ) : LiteralValue()
 

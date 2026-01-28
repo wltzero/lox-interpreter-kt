@@ -310,14 +310,16 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
             is LiteralValue.InstanceLiteralValue -> {
                 if (literal.fields.containsKey(exp.name)) {
                     literal.fields[exp.name]!!
-                } else if (literal.klass.methods.containsKey(exp.name)) {
-                    val method = literal.klass.methods[exp.name]!!
-                    val capturedEnv = method.capturedEnvironment
-                    val boundEnv = statement.Environment(capturedEnv)
-                    boundEnv.set("this", literal)
-                    LiteralValue.FunctionLiteralValue(method.name, method.parameters, method.body, boundEnv)
                 } else {
-                    throw EvaluateException("Undefined property '${exp.name}'.")
+                    val method = findMethod(literal.klass, exp.name)
+                    if (method != null) {
+                        val capturedEnv = method.capturedEnvironment
+                        val boundEnv = statement.Environment(capturedEnv)
+                        boundEnv.set("this", literal)
+                        LiteralValue.FunctionLiteralValue(method.name, method.parameters, method.body, boundEnv)
+                    } else {
+                        throw EvaluateException("Undefined property '${exp.name}'.")
+                    }
                 }
             }
             else -> throw EvaluateException("Only instances have properties.")
@@ -343,6 +345,31 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
         } else {
             throw EvaluateException("Can't use 'this' outside of a class.")
         }
+    }
+
+    override fun visitSuperExpr(exp: ASTNode.Expr.SuperExpr): LiteralValue {
+        val distance = locals[exp] ?: throw EvaluateException("Can't use 'super' outside of a class.")
+        val superclass = GlobalEnvironment.getAt(distance, "super").value
+        val obj = GlobalEnvironment.getAt(distance - 1, "this").value
+
+        return when (superclass) {
+            is LiteralValue.ClassLiteralValue -> {
+                val method = findMethod(superclass, exp.method)
+                    ?: throw EvaluateException("Undefined property '${exp.method}'.")
+                val capturedEnv = method.capturedEnvironment
+                val boundEnv = statement.Environment(capturedEnv)
+                boundEnv.set("this", obj)
+                LiteralValue.FunctionLiteralValue(method.name, method.parameters, method.body, boundEnv)
+            }
+            else -> throw EvaluateException("Superclass must be a class.")
+        }
+    }
+
+    private fun findMethod(klass: LiteralValue.ClassLiteralValue, name: String): LiteralValue.FunctionLiteralValue? {
+        if (klass.methods.containsKey(name)) {
+            return klass.methods[name]
+        }
+        return klass.superclass?.let { findMethod(it, name) }
     }
 
     // 辅助方法：判断两个 Value 是否相等

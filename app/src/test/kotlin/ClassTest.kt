@@ -584,4 +584,56 @@ class ClassTest {
         LoxAssertions.assertOutputLineCount(result, 2)
         LoxAssertions.assertOutputEquals(result, "Generic Generic\r\nToyota Corolla with four wheels")
     }
+
+    @Test
+    fun `Classes - Inheritance - multiple subclasses`() {
+        val myScript = """
+            class A {}
+
+            // B is a subclass of A
+            class B < A {}
+
+            // C is also a subclass of A
+            class C < A {}
+
+            print A();
+            print B();
+            print C();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 3)
+        LoxAssertions.assertOutputEquals(result, "A instance\r\nB instance\r\nC instance")
+    }
+
+    @Test
+    fun `Classes - Inheritance - multi-level inheritance`() {
+        val myScript = """
+            class Vehicle {}
+
+            // Car is a subclass of Vehicle
+            class Car < Vehicle {}
+
+            // Sedan is a subclass of Car
+            class Sedan < Car {}
+
+            print Vehicle();
+            print Car();
+            print Sedan();
+
+            {
+              // Truck is a subclass of Vehicle
+              class Truck < Vehicle {}
+              print Truck();
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 4)
+        LoxAssertions.assertOutputEquals(result, "Vehicle instance\r\nCar instance\r\nSedan instance\r\nTruck instance")
+    }
 }

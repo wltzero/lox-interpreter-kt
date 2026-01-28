@@ -89,6 +89,21 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
     override fun visitClassStmt(stmt: ASTNode.Stmt.ClassStmt) {
         GlobalEnvironment.define(stmt.name, LiteralValue.NilLiteralValue)
 
+        var superclass: LiteralValue.ClassLiteralValue? = null
+        if (stmt.superclass != null) {
+            val superclassValue = EvaluateVisitor.evaluate(stmt.superclass)
+            if (superclassValue is LiteralValue.ClassLiteralValue) {
+                superclass = superclassValue
+            } else {
+                throw RuntimeException("Superclass must be a class.")
+            }
+        }
+
+        GlobalEnvironment.pushScope()
+        if (superclass != null) {
+            GlobalEnvironment.define("super", superclass)
+        }
+
         val methods = mutableMapOf<String, LiteralValue.FunctionLiteralValue>()
         for (method in stmt.methods) {
             methods[method.name] = LiteralValue.FunctionLiteralValue(
@@ -99,6 +114,7 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
             )
         }
 
-        GlobalEnvironment.assign(stmt.name, LiteralValue.ClassLiteralValue(stmt.name, methods))
+        GlobalEnvironment.popScope()
+        GlobalEnvironment.assign(stmt.name, LiteralValue.ClassLiteralValue(stmt.name, superclass, methods))
     }
 }

@@ -98,6 +98,12 @@ sealed class ASTNode {
             }
         }
 
+        class SuperExpr(val method: String) : Expr() {
+            override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
+                return visitor.visitSuperExpr(this)
+            }
+        }
+
         interface ExprVisitor<T> {
             fun visitBinaryExp(exp: BinaryExp): T
             fun visitUnaryExp(exp: UnaryExp): T
@@ -113,6 +119,7 @@ sealed class ASTNode {
             fun visitGetExpr(exp: GetExpr): T
             fun visitSetExpr(exp: SetExpr): T
             fun visitThisExpr(exp: ThisExpr): T
+            fun visitSuperExpr(exp: SuperExpr): T
         }
     }
 
@@ -187,7 +194,7 @@ sealed class ASTNode {
             }
         }
 
-        class ClassStmt(val name: String, val methods: List<FunctionStmt>) : Stmt() {
+        class ClassStmt(val name: String, val superclass: Expr.IdentifyExp?, val methods: List<FunctionStmt>) : Stmt() {
             override fun accept(visitor: StmtVisitor<LiteralValue>) {
                 return visitor.visitClassStmt(this)
             }
@@ -528,6 +535,15 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 iter.moveNext()
                 val className = iter.cur().stringValue
                 consume(TokenType.IDENTIFIER, "Expect class name.")
+
+                var superclass: ASTNode.Expr.IdentifyExp? = null
+                if (iter.hasNext() && iter.cur().token == TokenType.LESS) {
+                    iter.moveNext()
+                    val superclassName = iter.cur().stringValue
+                    consume(TokenType.IDENTIFIER, "Expect superclass name.")
+                    superclass = ASTNode.Expr.IdentifyExp(superclassName)
+                }
+
                 consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
 
                 val methods = mutableListOf<ASTNode.Stmt.FunctionStmt>()
@@ -545,7 +561,7 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 }
                 consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
 
-                ASTNode.Stmt.ClassStmt(className, methods)
+                ASTNode.Stmt.ClassStmt(className, superclass, methods)
             }
 
             else -> {
@@ -754,6 +770,14 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
             TokenType.THIS -> {
                 iter.moveNext()
                 ASTNode.Expr.ThisExpr()
+            }
+
+            TokenType.SUPER -> {
+                iter.moveNext()
+                consume(TokenType.DOT, "Expect '.' after 'super'.")
+                val methodName = iter.cur().stringValue
+                consume(TokenType.IDENTIFIER, "Expect superclass method name.")
+                ASTNode.Expr.SuperExpr(methodName)
             }
 
             TokenType.STRING_UNTERMINATED -> {

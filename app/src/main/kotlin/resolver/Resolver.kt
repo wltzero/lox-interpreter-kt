@@ -18,7 +18,8 @@ class Resolver {
 
     private enum class ClassType {
         NONE,
-        CLASS
+        CLASS,
+        SUBCLASS
     }
 
     fun resolve(statements: List<ASTNode.Stmt>) {
@@ -63,6 +64,7 @@ class Resolver {
                 resolveExpr(expr.value)
             }
             is ASTNode.Expr.ThisExpr -> resolveThis(expr)
+            is ASTNode.Expr.SuperExpr -> resolveSuper(expr)
             is ASTNode.Expr.StringLiteral,
             is ASTNode.Expr.BooleanLiteral,
             is ASTNode.Expr.NilLiteral,
@@ -78,18 +80,41 @@ class Resolver {
         resolveLocal(expr, "this")
     }
 
+    private fun resolveSuper(expr: ASTNode.Expr.SuperExpr) {
+        if (currentClass == ClassType.NONE) {
+            throw ResolutionException("Can't use 'super' outside of a class.")
+        } else if (currentClass != ClassType.SUBCLASS) {
+            throw ResolutionException("Can't use 'super' in a class with no superclass.")
+        }
+        resolveLocal(expr, "super")
+    }
+
     private fun resolveClassStmt(stmt: ASTNode.Stmt.ClassStmt) {
         declare(stmt.name)
         define(stmt.name)
 
         val enclosingClass = currentClass
-        currentClass = ClassType.CLASS
+        if (stmt.superclass != null) {
+            currentClass = ClassType.SUBCLASS
+            resolveExpr(stmt.superclass)
+        } else {
+            currentClass = ClassType.CLASS
+        }
 
         beginScope()
         scopeStack.last()["this"] = true
 
+        if (stmt.superclass != null) {
+            beginScope()
+            scopeStack.last()["super"] = true
+        }
+
         for (method in stmt.methods) {
             resolveFunction(method.name, method.parameters, method.body)
+        }
+
+        if (stmt.superclass != null) {
+            endScope()
         }
 
         endScope()
