@@ -710,4 +710,184 @@ class ClassTest {
         LoxAssertions.assertOutputLineCount(result, 1)
         LoxAssertions.assertOutputEquals(result, "42")
     }
+
+    @Test
+    fun `Classes - Inheritance - constructor override`() {
+        val myScript = """
+            class Base {
+              init(a) {
+                this.a = a;
+              }
+            }
+
+            // Constructors can also be overridden
+            class Derived < Base {
+              init(a, b) {
+                this.a = a;
+                this.b = b;
+              }
+            }
+
+            var derived = Derived(89, 32);
+            print derived.a;
+            print derived.b;
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 2)
+        LoxAssertions.assertOutputEquals(result, "89\r\n32")
+    }
+
+    @Test
+    fun `Classes - Inheritance - method override with this`() {
+        val myScript = """
+            class Animal {
+              speak() {
+                return "Animal speaks";
+              }
+
+              makeSound() {
+                return "Generic sound";
+              }
+
+              communicate() {
+                return this.speak() + " : " + this.makeSound();
+              }
+            }
+
+            class Dog < Animal {
+              speak() {
+                return "Dog speaks";
+              }
+
+              makeSound() {
+                return "Woof";
+              }
+            }
+
+            class Puppy < Dog {
+              speak() {
+                return "Puppy speaks";
+              }
+            }
+
+            var animal = Animal();
+            var dog = Dog();
+            var puppy = Puppy();
+
+            print animal.communicate();
+            print dog.communicate();
+            print puppy.communicate();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 3)
+        LoxAssertions.assertOutputEquals(result, "Animal speaks : Generic sound\r\nDog speaks : Woof\r\nPuppy speaks : Woof")
+    }
+
+    @Test
+    fun `Classes - Inheritance - superclass must be class - function`() {
+        val myScript = """
+            fun A() {}
+
+            // A class can only inherit from a class.
+            class B < A {} // expect runtime error
+
+            print A();
+            print B();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Superclass must be a class.")
+    }
+
+    @Test
+    fun `Classes - Inheritance - superclass must be class - variable`() {
+        val myScript = """
+            var A = "class";
+
+            // A class can only inherit from a class
+            class B < A {} // expect runtime error
+
+            print B();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Superclass must be a class.")
+    }
+
+    @Test
+    fun `Classes - Inheritance - super keyword`() {
+        val myScript = """
+            class Base {
+              method() {
+                print "Base.method()";
+              }
+            }
+
+            class Parent < Base {
+              method() {
+                super.method();
+              }
+            }
+
+            class Child < Parent {
+              method() {
+                super.method();
+              }
+            }
+
+            var parent = Parent();
+            parent.method();
+            var child = Child();
+            child.method();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 2)
+        LoxAssertions.assertOutputEquals(result, "Base.method()\r\nBase.method()")
+    }
+
+    @Test
+    fun `Classes - Invalid usages of super - outside class`() {
+        val myScript = """
+            // super can't be used outside of a class
+            super.notEvenInAClass(); // expect compile error
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result, 65)
+        LoxAssertions.assertErrorContains(result, "Can't use 'super' outside of a class.")
+    }
+
+    @Test
+    fun `Classes - Invalid usages of super - no dot`() {
+        val myScript = """
+            class A {}
+
+            class B < A {
+              method() {
+                // super must be followed by `.`
+                // and an expression
+                super; // expect compile error
+              }
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result, 65)
+        LoxAssertions.assertErrorContains(result, "Expect '.' after 'super'.")
+    }
 }

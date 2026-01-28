@@ -95,7 +95,8 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
             if (superclassValue is LiteralValue.ClassLiteralValue) {
                 superclass = superclassValue
             } else {
-                throw RuntimeException("Superclass must be a class.")
+                val line = stmt.superclass.line
+                throw exception.EvaluateException("[line $line] Superclass must be a class.")
             }
         }
 

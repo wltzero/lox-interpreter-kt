@@ -32,7 +32,7 @@ sealed class ASTNode {
             }
         }
 
-        class IdentifyExp(val identifier: String) : Expr() {
+        class IdentifyExp(val identifier: String, val line: Int = 0) : Expr() {
             override fun accept(visitor: ExprVisitor<LiteralValue>): LiteralValue {
                 return visitor.visitIdentifyExp(this)
             }
@@ -540,8 +540,9 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 if (iter.hasNext() && iter.cur().token == TokenType.LESS) {
                     iter.moveNext()
                     val superclassName = iter.cur().stringValue
+                    val superclassLine = iter.cur().line
                     consume(TokenType.IDENTIFIER, "Expect superclass name.")
-                    superclass = ASTNode.Expr.IdentifyExp(superclassName)
+                    superclass = ASTNode.Expr.IdentifyExp(superclassName, superclassLine)
                 }
 
                 consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
