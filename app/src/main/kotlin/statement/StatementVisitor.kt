@@ -95,7 +95,7 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
                 method.name,
                 method.parameters,
                 method.body,
-                null
+                GlobalEnvironment.getCurrentEnvironment()
             )
         }
 

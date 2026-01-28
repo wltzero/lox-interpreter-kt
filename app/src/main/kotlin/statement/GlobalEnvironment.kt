@@ -36,7 +36,7 @@ object GlobalEnvironment {
         define(name, LiteralValue.FunctionLiteralValue(name, parameters, body, capturedEnv))
     }
 
-    private fun getCurrentEnvironment(): Environment {
+    fun getCurrentEnvironment(): Environment {
         return scopeStack.last()
     }
 
