@@ -167,7 +167,7 @@ class Resolver {
             currentFunction == FunctionType.NONE -> {
                 throw ResolutionException("Can't return from top-level code.")
             }
-            currentFunction == FunctionType.INITIALIZER -> {
+            currentFunction == FunctionType.INITIALIZER && stmt.value !is ASTNode.Expr.NilLiteral -> {
                 throw ResolutionException("Can't return a value from an initializer.")
             }
             else -> resolveExpr(stmt.value)

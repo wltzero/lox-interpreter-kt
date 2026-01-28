@@ -486,6 +486,25 @@ class ClassTest {
     }
 
     @Test
+    fun `Classes - Constructor - empty return allowed`() {
+        val myScript = """
+            class Person {
+              init() {
+                print "quz";
+                return;
+              }
+            }
+
+            Person();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "quz")
+    }
+
+    @Test
     fun `Classes - Constructor - 1`() {
         val myScript = """
             class Robot {
