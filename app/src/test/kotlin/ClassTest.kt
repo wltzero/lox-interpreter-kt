@@ -454,7 +454,7 @@ class ClassTest {
                 return inner;
               }
             }
-            
+
             var instance = Confused();
             var m = instance.method();
             m(instance);
@@ -464,5 +464,86 @@ class ClassTest {
 
         LoxAssertions.assertFailure(result)
         LoxAssertions.assertErrorContains(result, "Undefined property 'feeling'.")
+    }
+
+    @Test
+    fun `Classes - Constructor - 1`() {
+        val myScript = """
+            class Robot {
+              init(model, function) {
+                this.model = model;
+                this.function = function;
+              }
+            }
+            print Robot("R2-D2", "Astromech").model;
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 1)
+        LoxAssertions.assertOutputEquals(result, "R2-D2")
+    }
+
+    @Test
+    fun `Classes - Constructor - 2`() {
+        val myScript = """
+            class Counter {
+              init(startValue) {
+                if (startValue < 0) {
+                  print "startValue can't be negative";
+                  this.count = 0;
+                } else {
+                  this.count = startValue;
+                }
+              }
+            }
+
+            var instance = Counter(-52);
+            print instance.count;
+            print instance.init(52).count;
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 3)
+        LoxAssertions.assertOutputEquals(result, "startValue can't be negative\r\n0\r\n52")
+    }
+
+    @Test
+    fun `Classes - Constructor - 3`() {
+        val myScript = """
+            class Vehicle {
+              init(type) {
+                this.type = type;
+              }
+            }
+
+            class Car {
+              init(make, model) {
+                this.make = make;
+                this.model = model;
+                this.wheels = "four";
+              }
+
+              describe() {
+                print this.make + " " + this.model +
+                " with " + this.wheels + " wheels";
+              }
+            }
+
+            var vehicle = Vehicle("Generic");
+            print "Generic " + vehicle.type;
+
+            var myCar = Car("Toyota", "Corolla");
+            myCar.describe();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 2)
+        LoxAssertions.assertOutputEquals(result, "Generic Generic\r\nToyota Corolla with four wheels")
     }
 }

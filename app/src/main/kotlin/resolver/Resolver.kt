@@ -152,6 +152,10 @@ class Resolver {
             declare(it)
             define(it)
         }
+        if (currentClass != ClassType.NONE) {
+            declare("this")
+            define("this")
+        }
         resolve(body)
         endScope()
         currentFunction = enclosingFunction

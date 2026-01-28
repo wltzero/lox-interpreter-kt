@@ -3,7 +3,6 @@ package evaluator
 import exception.EvaluateException
 import exception.ReturnException
 import parser.ASTNode
-import statement.Environment
 import statement.GlobalEnvironment
 import statement.StatementVisitor
 import tokenizer.TokenType
@@ -234,48 +233,74 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
         val calleeValue = exp.callee.accept(this)
         val arguments = exp.arguments.map { it.accept(this) }
         return when (val literal = calleeValue) {
-            is LiteralValue.FunctionLiteralValue -> {
-                if (arguments.size != literal.parameters.size) {
-                    throw EvaluateException("Expected ${literal.parameters.size} arguments but got ${arguments.size}.")
-                }
+            is LiteralValue.FunctionLiteralValue -> executeFunction(literal, arguments)
+            is LiteralValue.NativeFunctionLiteralValue -> executeNativeFunction(literal, arguments)
+            is LiteralValue.ClassLiteralValue -> instantiateClass(literal, arguments)
+            else -> throw EvaluateException("Can only call functions or classes.")
+        }
+    }
 
-                literal.capturedEnvironment?.let { GlobalEnvironment.pushScopeWith(it) }
-                for (i in literal.parameters.indices) {
-                    GlobalEnvironment.define(literal.parameters[i], arguments[i])
-                }
+    private fun executeFunction(literal: LiteralValue.FunctionLiteralValue, arguments: List<LiteralValue>): LiteralValue {
+        if (arguments.size != literal.parameters.size) {
+            throw EvaluateException("Expected ${literal.parameters.size} arguments but got ${arguments.size}.")
+        }
+        literal.capturedEnvironment?.let { GlobalEnvironment.pushScopeWith(it) }
+        defineParameters(literal, arguments)
 
+        return try {
+            StatementVisitor.run(literal.body)
+            if (literal.name == "init") {
                 try {
-                    StatementVisitor.run(literal.body)
-                } catch (res: ReturnException) {
-                    GlobalEnvironment.popScope()
-                    return res.value
+                    GlobalEnvironment.get("this").value
+                } catch (e: Exception) {
+                    LiteralValue.NilLiteralValue
                 }
-                GlobalEnvironment.popScope()
+            } else {
                 LiteralValue.NilLiteralValue
             }
-            is LiteralValue.NativeFunctionLiteralValue ->{
-                if (arguments.size != literal.parameters.size) {
-                    throw EvaluateException("Expected ${literal.parameters.size} arguments but got ${arguments.size}.")
+        } catch (res: ReturnException) {
+            return if (literal.name == "init" && res.value is LiteralValue.NilLiteralValue) {
+                try {
+                    GlobalEnvironment.get("this").value
+                } catch (_: Exception) {
+                    res.value
                 }
-                val res = literal.function.invoke(arguments)
-                res
+            } else {
+                res.value
             }
-            is LiteralValue.ClassLiteralValue -> {
-                val instance = LiteralValue.InstanceLiteralValue(literal)
-                literal.methods["init"]?.let { initializer ->
-                    GlobalEnvironment.pushScope()
-                    GlobalEnvironment.define("this", instance)
-                    try {
-                        StatementVisitor.run(initializer.body)
-                    } catch (res: ReturnException) {
-                        GlobalEnvironment.popScope()
-                        return res.value
-                    }
-                    GlobalEnvironment.popScope()
-                }
-                instance
-            }
-            else -> throw EvaluateException("Can only call functions or classes.")
+        } finally {
+            GlobalEnvironment.popScope()
+        }
+    }
+
+    private fun executeNativeFunction(literal: LiteralValue.NativeFunctionLiteralValue, arguments: List<LiteralValue>): LiteralValue {
+        if (arguments.size != literal.parameters.size) {
+            throw EvaluateException("Expected ${literal.parameters.size} arguments but got ${arguments.size}.")
+        }
+        return literal.function.invoke(arguments)
+    }
+
+    private fun instantiateClass(literal: LiteralValue.ClassLiteralValue, arguments: List<LiteralValue>): LiteralValue {
+        val instance = LiteralValue.InstanceLiteralValue(literal)
+        val initializer = literal.methods["init"] ?: return instance
+
+        GlobalEnvironment.pushScope()
+        GlobalEnvironment.define("this", instance)
+        defineParameters(initializer, arguments)
+
+        return try {
+            StatementVisitor.run(initializer.body)
+            instance
+        } catch (res: ReturnException) {
+            res.value.takeIf { it !is LiteralValue.NilLiteralValue } ?: instance
+        } finally {
+            GlobalEnvironment.popScope()
+        }
+    }
+
+    private fun defineParameters(func: LiteralValue.FunctionLiteralValue, arguments: List<LiteralValue>) {
+        for (i in func.parameters.indices) {
+            GlobalEnvironment.define(func.parameters[i], arguments.getOrElse(i) { LiteralValue.NilLiteralValue })
         }
     }
 
@@ -286,7 +311,6 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
                 if (literal.fields.containsKey(exp.name)) {
                     literal.fields[exp.name]!!
                 } else if (literal.klass.methods.containsKey(exp.name)) {
-                    // Return a bound method
                     val method = literal.klass.methods[exp.name]!!
                     val capturedEnv = method.capturedEnvironment
                     val boundEnv = statement.Environment(capturedEnv)

@@ -49,7 +49,15 @@ object GlobalEnvironment {
     }
 
     fun getAt(distance: Int, name: String): VariableValue {
-        return ancestor(distance).get(name)
+        val env = ancestor(distance)
+        var current: Environment? = env
+        while (current != null) {
+            if (current.contains(name)) {
+                return current.get(name)
+            }
+            current = current.parent
+        }
+        throw VariableNotFoundException("Undefined variable '$name'.")
     }
 
     fun assignAt(distance: Int, name: String, value: LiteralValue) {
