@@ -2,6 +2,8 @@ package statement
 
 import evaluator.EvaluateVisitor
 import evaluator.LiteralValue
+import exception.EvaluateException
+import exception.ResolutionException
 import exception.ReturnException
 import parser.ASTNode
 
@@ -96,7 +98,7 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
                 superclass = superclassValue
             } else {
                 val line = stmt.superclass.line
-                throw exception.EvaluateException("[line $line] Superclass must be a class.")
+                throw ResolutionException("[line $line] Superclass must be a class.")
             }
         }
 
