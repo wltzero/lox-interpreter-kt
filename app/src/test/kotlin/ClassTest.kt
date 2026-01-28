@@ -803,7 +803,7 @@ class ClassTest {
 
         val result = testRunner.run(myScript)
 
-        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertFailure(result, 70)
         LoxAssertions.assertErrorContains(result, "Superclass must be a class.")
     }
 
@@ -820,7 +820,7 @@ class ClassTest {
 
         val result = testRunner.run(myScript)
 
-        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertFailure(result, 70)
         LoxAssertions.assertErrorContains(result, "Superclass must be a class.")
     }
 

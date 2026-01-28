@@ -56,7 +56,7 @@ fun main(args: Array<String>) {
                 exitProcess(65)
             } catch (e: EvaluateException) {
                 System.err.println(e.message)
-                exitProcess(65)
+                exitProcess(70)
             } catch (e: VariableNotFoundException){
                 System.err.println(e.message)
                 exitProcess(70)
