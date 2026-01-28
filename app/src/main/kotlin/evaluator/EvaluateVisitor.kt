@@ -282,7 +282,11 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
 
     private fun instantiateClass(literal: LiteralValue.ClassLiteralValue, arguments: List<LiteralValue>): LiteralValue {
         val instance = LiteralValue.InstanceLiteralValue(literal)
-        val initializer = literal.methods["init"] ?: return instance
+        val initializer = findMethod(literal, "init")
+
+        if (initializer == null) {
+            return instance
+        }
 
         GlobalEnvironment.pushScope()
         GlobalEnvironment.define("this", instance)

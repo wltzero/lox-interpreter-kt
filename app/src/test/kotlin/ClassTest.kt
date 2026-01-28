@@ -636,4 +636,78 @@ class ClassTest {
         LoxAssertions.assertOutputLineCount(result, 4)
         LoxAssertions.assertOutputEquals(result, "Vehicle instance\r\nCar instance\r\nSedan instance\r\nTruck instance")
     }
+
+    @Test
+    fun `Classes - Inheritance - method inheritance`() {
+        val myScript = """
+            class Root {
+              getName() {
+                print "Root class";
+              }
+            }
+
+            class Parent < Root {
+              parentMethod() {
+                print "Method defined in Parent";
+              }
+            }
+
+            class Child < Parent {
+              childMethod() {
+                print "Method defined in Child";
+              }
+            }
+
+            var root = Root();
+            var parent = Parent();
+            var child = Child();
+
+            // Root methods are available to all
+            root.getName();
+            parent.getName();
+            child.getName();
+
+            // Parent methods are available to Parent and Child
+            parent.parentMethod();
+            child.parentMethod();
+
+            // Child methods are only available to Child
+            child.childMethod();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 6)
+        LoxAssertions.assertOutputEquals(result, "Root class\r\nRoot class\r\nRoot class\r\nMethod defined in Parent\r\nMethod defined in Parent\r\nMethod defined in Child")
+    }
+
+    @Test
+    fun `Classes - Inheritance - constructor inheritance`() {
+        val myScript = """
+            class Foo {
+              init() {
+                this.secret = 42;
+              }
+            }
+
+            // Bar is a subclass of Foo
+            class Bar < Foo {}
+
+            // Baz is a subclass of Bar
+            class Baz < Bar {}
+
+            var baz = Baz();
+
+            // Baz should inherit the constructor from Foo
+            // which should set the secret value to 42
+            print baz.secret;
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputLineCount(result, 1)
+        LoxAssertions.assertOutputEquals(result, "42")
+    }
 }
