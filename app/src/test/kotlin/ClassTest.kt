@@ -467,6 +467,25 @@ class ClassTest {
     }
 
     @Test
+    fun `Classes - Constructor - return value`() {
+        val myScript = """
+            class ThingDefault {
+              init() {
+                this.x = "foo";
+                return this;
+              }
+            }
+            var out = ThingDefault();
+            print out;
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Can't return a value from an initializer.")
+    }
+
+    @Test
     fun `Classes - Constructor - 1`() {
         val myScript = """
             class Robot {

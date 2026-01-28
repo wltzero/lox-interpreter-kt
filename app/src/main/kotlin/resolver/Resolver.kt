@@ -12,7 +12,8 @@ class Resolver {
     private enum class FunctionType {
         NONE,
         FUNCTION,
-        METHOD
+        METHOD,
+        INITIALIZER
     }
 
     private enum class ClassType {
@@ -88,7 +89,7 @@ class Resolver {
         scopeStack.last()["this"] = true
 
         for (method in stmt.methods) {
-            resolveFunction(method.parameters, method.body)
+            resolveFunction(method.name, method.parameters, method.body)
         }
 
         endScope()
@@ -141,12 +142,12 @@ class Resolver {
     private fun resolveFunctionStmt(stmt: ASTNode.Stmt.FunctionStmt) {
         declare(stmt.name)
         define(stmt.name)
-        resolveFunction(stmt.parameters, stmt.body)
+        resolveFunction(stmt.name, stmt.parameters, stmt.body)
     }
 
-    private fun resolveFunction(parameters: List<String>, body: List<ASTNode.Stmt>) {
+    private fun resolveFunction(name: String, parameters: List<String>, body: List<ASTNode.Stmt>) {
         val enclosingFunction = currentFunction
-        currentFunction = FunctionType.FUNCTION
+        currentFunction = if (name == "init") FunctionType.INITIALIZER else FunctionType.FUNCTION
         beginScope()
         parameters.forEach {
             declare(it)
@@ -162,10 +163,15 @@ class Resolver {
     }
 
     private fun resolveReturnStmt(stmt: ASTNode.Stmt.ReturnStmt) {
-        if (currentFunction == FunctionType.NONE) {
-            throw ResolutionException("Can't return from top-level code.")
+        when {
+            currentFunction == FunctionType.NONE -> {
+                throw ResolutionException("Can't return from top-level code.")
+            }
+            currentFunction == FunctionType.INITIALIZER -> {
+                throw ResolutionException("Can't return a value from an initializer.")
+            }
+            else -> resolveExpr(stmt.value)
         }
-        resolveExpr(stmt.value)
     }
 
     private fun resolveVariable(expr: ASTNode.Expr.IdentifyExp) {
