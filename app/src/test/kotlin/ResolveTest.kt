@@ -147,5 +147,141 @@ class ResolveTest {
         LoxAssertions.assertOutputEquals(result, "0\r\n-1\r\nafter\r\n0")
     }
 
+    // ==================== Error: Local Variable in Own Initializer ====================
+
+    @Test
+    fun `Resolving & Binding - Error - Local Variable In Own Initializer Simple`() {
+        val myScript = """
+            var a = "outer";
+            {
+              var a = a;
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Can't read local variable in its own initializer")
+    }
+
+    @Test
+    fun `Resolving & Binding - Error - Local Variable In Own Initializer With Function`() {
+        val myScript = """
+            fun returnArg(arg) {
+              return arg;
+            }
+
+            var b = "global";
+            {
+              var a = "first";
+              var b = returnArg(b);
+              print b;
+            }
+
+            var b = b + " updated";
+            print b;
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Can't read local variable in its own initializer")
+    }
+
+    @Test
+    fun `Resolving & Binding - Error - Local Variable In Own Initializer Nested Function`() {
+        val myScript = """
+            fun outer() {
+              var a = "outer";
+
+              fun inner() {
+                var a = a;
+                print a;
+              }
+
+              inner();
+            }
+
+            outer();
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Can't read local variable in its own initializer")
+    }
+
+    // ==================== Error: Return From Top-Level ====================
+
+    @Test
+    fun `Resolving & Binding - Error - Return From Top-Level In Control Flow`() {
+        val myScript = """
+            fun foo() {
+              if (true) {
+                return "early return";
+              }
+
+              for (var i = 0; i < 10; i = i + 1) {
+                return "loop return";
+              }
+            }
+
+            if (true) {
+              return "conditional return";
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Can't return from top-level code")
+    }
+
+    @Test
+    fun `Resolving & Binding - Error - Return From Block At Top-Level`() {
+        val myScript = """
+            {
+              return "not allowed in a block either";
+            }
+
+            fun allowed() {
+              if (true) {
+                return "this is fine";
+              }
+              return;
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Can't return from top-level code")
+    }
+
+    @Test
+    fun `Resolving & Binding - Error - Return From Nested Function In Top-Level If`() {
+        val myScript = """
+            fun outer() {
+              fun inner() {
+                return "ok";
+              }
+
+              return "also ok";
+            }
+
+            if (true) {
+              fun nested() {
+                return;
+              }
+
+              return "not ok";
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertErrorContains(result, "Can't return from top-level code")
+    }
 
 }

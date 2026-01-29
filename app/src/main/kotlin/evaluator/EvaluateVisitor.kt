@@ -40,6 +40,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
             TokenType.EQUAL_EQUAL -> LiteralValue.BooleanLiteralValue(areValuesEqual(leftValue, rightValue))
             TokenType.BANG_EQUAL -> LiteralValue.BooleanLiteralValue(!areValuesEqual(leftValue, rightValue))
 
+            // TODO)) 实现短路机制
             TokenType.AND -> handleAnd(exp.left, exp.right)
             TokenType.OR -> handleOr(exp.left, exp.right)
             else -> throw EvaluateException("Unsupported binary operator: ${exp.op}")
