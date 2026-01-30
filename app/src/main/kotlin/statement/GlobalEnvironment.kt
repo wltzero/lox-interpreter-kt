@@ -22,6 +22,7 @@ object GlobalEnvironment {
     private val scopeStack = mutableListOf(Environment())
 
     init{
+        // TODO)) 用Panama Api加入一些好玩的东西
         registryNativeFunction("clock", emptyList(), LiteralValue.NilLiteralValue) {
             LiteralValue.IntegerLiteralValue((System.currentTimeMillis() / 1000).toInt())
         }

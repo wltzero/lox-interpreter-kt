@@ -194,6 +194,18 @@ sealed class ASTNode {
             }
         }
 
+        class BreakStmt : Stmt() {
+            override fun accept(visitor: StmtVisitor<LiteralValue>): Any {
+                return visitor.visitBreakStmt(this)
+            }
+        }
+
+        class ContinueStmt : Stmt() {
+            override fun accept(visitor: StmtVisitor<LiteralValue>): Any {
+                return visitor.visitContinueStmt(this)
+            }
+        }
+
         class ClassStmt(val name: String, val superclass: Expr.IdentifyExp?, val methods: List<FunctionStmt>) : Stmt() {
             override fun accept(visitor: StmtVisitor<LiteralValue>) {
                 return visitor.visitClassStmt(this)
@@ -212,6 +224,8 @@ sealed class ASTNode {
             fun visitForStmt(stmt: ForStmt)
             fun visitFunStmt(stmt: FunctionStmt)
             fun visitReturnStmt(stmt: ReturnStmt): LiteralValue
+            fun visitBreakStmt(stmt: BreakStmt): Any
+            fun visitContinueStmt(stmt: ContinueStmt): Any
             fun visitClassStmt(stmt: ClassStmt)
         }
     }
@@ -433,9 +447,9 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
 
             TokenType.WHILE -> {
                 iter.moveNext()
-                consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'")
+                consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'")
                 val condition = parseExpr()
-                consume(TokenType.RIGHT_PAREN, "Expect ')' after 'if'")
+                consume(TokenType.RIGHT_PAREN, "Expect ')' after 'while'")
                 var thenBranch: List<ASTNode.Stmt>
 
                 if (iter.cur().token == TokenType.LEFT_BRACE) {
@@ -507,6 +521,9 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 consume(TokenType.LEFT_PAREN, "Expect '(' after function name")
                 val params = mutableListOf<String>()
                 while (iter.cur().token != TokenType.RIGHT_PAREN) {
+                    if (params.size >= 255) {
+                        throw ParserException("Cannot have more than 255 parameters.")
+                    }
                     params.add(iter.cur().stringValue)
                     consume(TokenType.IDENTIFIER, "Expect parameter name")
                     if (iter.cur().token != TokenType.RIGHT_PAREN) {
@@ -529,6 +546,18 @@ class Parser(private val iter: LookForwardIterator<ParsedToken>) {
                 }
                 consume(TokenType.SEMICOLON, "Expect ';' after return statement")
                 ASTNode.Stmt.ReturnStmt(value)
+            }
+
+            TokenType.BREAK -> {
+                iter.moveNext()
+                consume(TokenType.SEMICOLON, "Expect ';' after break")
+                ASTNode.Stmt.BreakStmt()
+            }
+
+            TokenType.CONTINUE -> {
+                iter.moveNext()
+                consume(TokenType.SEMICOLON, "Expect ';' after continue")
+                ASTNode.Stmt.ContinueStmt()
             }
 
             TokenType.CLASS -> {

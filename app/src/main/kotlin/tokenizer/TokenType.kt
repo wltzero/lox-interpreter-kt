@@ -16,7 +16,9 @@ enum class TokenType(val symbol: String? = null) {
 
     // 关键字
     AND("and"),
+    BREAK("break"),
     CLASS("class"),
+    CONTINUE("continue"),
     ELSE("else"),
     FALSE("false"),
     FOR("for"),

@@ -188,10 +188,10 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
                 read(1)
                 TokenType.SEMICOLON
             }
-//            '%' -> {
-//                read(1)
-//                TokenType.MOD
-//            }
+            '%' -> {
+                read(1)
+                TokenType.MOD
+            }
             else -> {
                 fun isAlNum() = iter.cur() in 'a'..'z' || iter.cur() in 'A'..'Z' || iter.cur() == '_'
                 fun isAlNumOrDigit() = isAlNum() || iter.cur() in '0'..'9'
@@ -204,9 +204,9 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
 
                     when (sb.toString()) {
                         "and" -> TokenType.AND
-                        "var" -> TokenType.VAR
+                        "break" -> TokenType.BREAK
                         "class" -> TokenType.CLASS
-                        "this" -> TokenType.THIS
+                        "continue" -> TokenType.CONTINUE
                         "else" -> TokenType.ELSE
                         "false" -> TokenType.FALSE
                         "for" -> TokenType.FOR
@@ -216,7 +216,9 @@ class Tokenizer(private val iter: LookForwardIterator<Char>): Iterator<ParsedTok
                         "or" -> TokenType.OR
                         "return" -> TokenType.RETURN
                         "super" -> TokenType.SUPER
+                        "this" -> TokenType.THIS
                         "true" -> TokenType.TRUE
+                        "var" -> TokenType.VAR
                         "while" -> TokenType.WHILE
                         "print" -> TokenType.PRINT
                         else -> {

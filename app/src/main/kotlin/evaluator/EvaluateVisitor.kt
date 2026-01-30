@@ -30,9 +30,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
             TokenType.MINUS -> handleMinus(leftValue, rightValue)
             TokenType.STAR -> handleStar(leftValue, rightValue)
             TokenType.SLASH -> handleSlash(leftValue, rightValue)
-
-            TokenType.MOD -> LiteralValue.DoubleLiteralValue(leftValue.asDouble() % rightValue.asDouble())
-
+            TokenType.MOD -> handleMod(leftValue, rightValue)
             TokenType.LESS -> LiteralValue.BooleanLiteralValue(leftValue.asDouble() < rightValue.asDouble())
             TokenType.LESS_EQUAL -> LiteralValue.BooleanLiteralValue(leftValue.asDouble() <= rightValue.asDouble())
             TokenType.GREATER -> LiteralValue.BooleanLiteralValue(leftValue.asDouble() > rightValue.asDouble())
@@ -142,6 +140,28 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
 
             left is LiteralValue.DoubleLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
                 LiteralValue.DoubleLiteralValue(left.value / right.value)
+            }
+
+            else -> throw EvaluateException("Operands must be numbers.")
+        }
+    }
+
+    private fun handleMod(left: LiteralValue, right: LiteralValue): LiteralValue {
+        return when {
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value % right.value)
+            }
+
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
+                LiteralValue.IntegerLiteralValue(left.value % right.value)
+            }
+
+            left is LiteralValue.IntegerLiteralValue && right is LiteralValue.DoubleLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value % right.value)
+            }
+
+            left is LiteralValue.DoubleLiteralValue && right is LiteralValue.IntegerLiteralValue -> {
+                LiteralValue.DoubleLiteralValue(left.value % right.value)
             }
 
             else -> throw EvaluateException("Operands must be numbers.")
@@ -385,6 +405,9 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
             a is LiteralValue.IntegerLiteralValue && b is LiteralValue.IntegerLiteralValue -> a.value == b.value
             a is LiteralValue.BooleanLiteralValue && b is LiteralValue.BooleanLiteralValue -> a.value == b.value
             a is LiteralValue.StringLiteralValue && b is LiteralValue.StringLiteralValue -> a.value == b.value
+            // Double 和 Integer 之间的比较
+            a is LiteralValue.DoubleLiteralValue && b is LiteralValue.IntegerLiteralValue -> a.value == b.value.toDouble()
+            a is LiteralValue.IntegerLiteralValue && b is LiteralValue.DoubleLiteralValue -> a.value.toDouble() == b.value
             else -> false
         }
     }

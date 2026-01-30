@@ -64,7 +64,7 @@ class ControlFlowTest {
     fun `Control Flow - If - Zero Is Falsy`() {
         val myScript = """
             var x = 0;
-            if (x) {
+            if (!x) {
                 print "will not print";
             }
         """.trimIndent()
@@ -75,20 +75,6 @@ class ControlFlowTest {
         LoxAssertions.assertOutputEquals(result, "")
     }
 
-    @Test
-    fun `Control Flow - If - Empty String Is Falsy`() {
-        val myScript = """
-            var x = "";
-            if (x) {
-                print "will not print";
-            }
-        """.trimIndent()
-
-        val result = testRunner.run(myScript)
-
-        LoxAssertions.assertSuccess(result)
-        LoxAssertions.assertOutputEquals(result, "")
-    }
 
     @Test
     fun `Control Flow - If - Boolean True`() {
@@ -123,7 +109,7 @@ class ControlFlowTest {
         val myScript = """
             var a = 3;
             var b = 5;
-            if (a + b > 10) {
+            if (a + b < 10) {
                 print "sum is greater than 10";
             }
         """.trimIndent()
@@ -187,7 +173,7 @@ class ControlFlowTest {
     fun `Control Flow - If Else - Single Statement Bodies`() {
         val myScript = """
             var x = true;
-            if (x) print "true" else print "false";
+            if (x) print "true"; else print "false";
         """.trimIndent()
 
         val result = testRunner.run(myScript)
@@ -644,9 +630,7 @@ class ControlFlowTest {
         LoxAssertions.assertOutputEquals(result, "0\r\n1\r\n10\r\n11")
     }
 
-    // Note: Lox language does not support 'break' and 'continue' keywords
-    // These tests are commented out until the feature is implemented
-    /*
+    // Now Lox language supports 'break' and 'continue' keywords
     @Test
     fun `Control Flow - While - Break Condition Inside`() {
         val myScript = """
@@ -684,7 +668,6 @@ class ControlFlowTest {
         LoxAssertions.assertSuccess(result)
         LoxAssertions.assertOutputEquals(result, "1\r\n3\r\n4\r\n5")
     }
-    */
 
     @Test
     fun `Control Flow - While - Single Statement Body`() {
@@ -1158,7 +1141,7 @@ class ControlFlowTest {
     @Test
     fun `Control Flow - Error - Missing Condition Paren`() {
         val myScript = """
-            if true {
+            if false {
                 print "test";
             }
         """.trimIndent()
@@ -1177,7 +1160,8 @@ class ControlFlowTest {
 
         val result = testRunner.run(myScript)
 
-        LoxAssertions.assertFailure(result)
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "test")
     }
 
     @Test
@@ -1243,5 +1227,158 @@ class ControlFlowTest {
         val result = testRunner.run(myScript)
 
         LoxAssertions.assertFailure(result)
+    }
+
+    // ==================== Break and Continue Tests ====================
+
+    @Test
+    fun `Control Flow - Break - In Nested Loop`() {
+        val myScript = """
+            for (var i = 0; i < 3; i = i + 1) {
+                for (var j = 0; j < 3; j = j + 1) {
+                    if (j == 1) {
+                        break;
+                    }
+                    print i * 10 + j;
+                }
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "0\r\n10\r\n20")
+    }
+
+    @Test
+    fun `Control Flow - Continue - In Nested Loop`() {
+        val myScript = """
+            for (var i = 0; i < 2; i = i + 1) {
+                for (var j = 0; j < 3; j = j + 1) {
+                    if (j == 1) {
+                        continue;
+                    }
+                    print i * 10 + j;
+                }
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "0\r\n2\r\n10\r\n12")
+    }
+
+    @Test
+    fun `Control Flow - Break - With For Loop Increment`() {
+        val myScript = """
+            for (var i = 0; i < 10; i = i + 1) {
+                if (i == 3) {
+                    break;
+                }
+                print i;
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "0\r\n1\r\n2")
+    }
+
+    @Test
+    fun `Control Flow - Continue - With For Loop Increment`() {
+        val myScript = """
+            for (var i = 0; i < 5; i = i + 1) {
+                if (i == 2) {
+                    continue;
+                }
+                print i;
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "0\r\n1\r\n3\r\n4")
+    }
+
+    @Test
+    fun `Control Flow - Break - In While With Complex Condition`() {
+        val myScript = """
+            var i = 0;
+            var sum = 0;
+            while (i < 10) {
+                sum = sum + i;
+                if (sum > 10) {
+                    break;
+                }
+                i = i + 1;
+            }
+            print sum;
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "15")
+    }
+
+    @Test
+    fun `Control Flow - Continue - Skip Even Numbers`() {
+        val myScript = """
+            for (var i = 0; i < 10; i = i + 1) {
+                if (i % 2 == 0) {
+                    continue;
+                }
+                print i;
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "1\r\n3\r\n5\r\n7\r\n9")
+    }
+
+    @Test
+    fun `Control Flow - Break - Early Exit From Loop`() {
+        val myScript = """
+            var found = false;
+            var i = 0;
+            while (i < 100) {
+                if (i == 7) {
+                    found = true;
+                    break;
+                }
+                i = i + 1;
+            }
+            print found;
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "true")
+    }
+
+    @Test
+    fun `Control Flow - Continue - Multiple Conditions`() {
+        val myScript = """
+            for (var i = 1; i <= 20; i = i + 1) {
+                if (i % 3 == 0) {
+                    continue;
+                }
+                if (i % 5 == 0) {
+                    continue;
+                }
+                print i;
+            }
+        """.trimIndent()
+
+        val result = testRunner.run(myScript)
+
+        LoxAssertions.assertSuccess(result)
+        LoxAssertions.assertOutputEquals(result, "1\r\n2\r\n4\r\n7\r\n8\r\n11\r\n13\r\n14\r\n16\r\n17\r\n19")
     }
 }

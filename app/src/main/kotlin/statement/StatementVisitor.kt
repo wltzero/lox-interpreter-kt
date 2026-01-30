@@ -3,8 +3,9 @@ package statement
 import evaluator.EvaluateVisitor
 import evaluator.LiteralValue
 import exception.EvaluateException
-import exception.ResolutionException
 import exception.ReturnException
+import exception.BreakException
+import exception.ContinueException
 import parser.ASTNode
 
 object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
@@ -63,7 +64,13 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
     override fun visitWhileStmt(stmt: ASTNode.Stmt.WhileStmt) {
         val condition = stmt.condition
         while (EvaluateVisitor.evaluate(condition).isTruthy()) {
-            stmt.thenBranch.forEach { it.accept(this) }
+            try {
+                stmt.thenBranch.forEach { it.accept(this) }
+            } catch (_: BreakException) {
+                break
+            } catch (_: ContinueException) {
+                continue
+            }
         }
     }
 
@@ -71,11 +78,20 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
         GlobalEnvironment.pushScope()
         stmt.initializer?.accept(this)
         while (stmt.condition?.let { EvaluateVisitor.evaluate(it).isTruthy() } ?: true) {
-            // 为循环体创建嵌套作用域
-            GlobalEnvironment.pushScope()
-            stmt.body.forEach { it.accept(this) }
-            GlobalEnvironment.popScope()
-            stmt.increment?.accept(EvaluateVisitor)
+            try {
+                // 为循环体创建嵌套作用域
+                GlobalEnvironment.pushScope()
+                stmt.body.forEach { it.accept(this) }
+                GlobalEnvironment.popScope()
+                stmt.increment?.accept(EvaluateVisitor)
+            } catch (_: BreakException) {
+                GlobalEnvironment.popScope()
+                break
+            } catch (_: ContinueException) {
+                GlobalEnvironment.popScope()
+                stmt.increment?.accept(EvaluateVisitor)
+                continue
+            }
         }
         GlobalEnvironment.popScope()
     }
@@ -86,6 +102,14 @@ object StatementVisitor : ASTNode.Stmt.StmtVisitor<LiteralValue> {
 
     override fun visitReturnStmt(stmt: ASTNode.Stmt.ReturnStmt): LiteralValue {
         throw ReturnException(EvaluateVisitor.evaluate(stmt.value))
+    }
+
+    override fun visitBreakStmt(stmt: ASTNode.Stmt.BreakStmt): Any {
+        throw BreakException()
+    }
+
+    override fun visitContinueStmt(stmt: ASTNode.Stmt.ContinueStmt): Any {
+        throw ContinueException()
     }
 
     override fun visitClassStmt(stmt: ASTNode.Stmt.ClassStmt) {

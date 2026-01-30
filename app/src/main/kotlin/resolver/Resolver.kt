@@ -40,6 +40,8 @@ class Resolver {
             is ASTNode.Stmt.ForStmt -> resolveForStmt(stmt)
             is ASTNode.Stmt.FunctionStmt -> resolveFunctionStmt(stmt)
             is ASTNode.Stmt.ReturnStmt -> resolveReturnStmt(stmt)
+            is ASTNode.Stmt.BreakStmt -> Unit  // break 语句不需要特殊解析
+            is ASTNode.Stmt.ContinueStmt -> Unit  // continue 语句不需要特殊解析
             is ASTNode.Stmt.ClassStmt -> resolveClassStmt(stmt)
         }
     }
