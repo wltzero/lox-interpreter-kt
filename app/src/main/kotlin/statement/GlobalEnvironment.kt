@@ -65,14 +65,6 @@ object GlobalEnvironment {
         ancestor(distance).set(name, value)
     }
 
-    fun getGlobal(name: String): VariableValue {
-        return scopeStack.first().get(name)
-    }
-
-    fun assignGlobal(name: String, value: LiteralValue) {
-        scopeStack.first().set(name, value)
-    }
-
     fun get(name: String): VariableValue {
         var env: Environment = getCurrentEnvironment()
         while(true){

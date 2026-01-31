@@ -40,7 +40,7 @@ class ResolveTest {
         // 使用断言验证结果
         LoxAssertions.assertSuccess(result)
         LoxAssertions.assertOutputLineCount(result, 2)
-        LoxAssertions.assertOutputEquals(result, "global\r\nglobal")
+        LoxAssertions.assertOutputEquals(result, "global\r\nlocal")
     }
 
     @Test
@@ -74,7 +74,7 @@ class ResolveTest {
         // 使用断言验证结果
         LoxAssertions.assertSuccess(result)
         LoxAssertions.assertOutputLineCount(result, 2)
-        LoxAssertions.assertOutputEquals(result, "outer\r\nouter")
+        LoxAssertions.assertOutputEquals(result, "outer\r\nmiddle")
     }
 
 

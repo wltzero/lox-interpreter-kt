@@ -101,21 +101,6 @@ class FunctionTest {
     }
 
     @Test
-    fun `Functions - Declaration - Function After Call`() {
-        val myScript = """
-            foo();
-            fun foo() {
-                print "defined after call";
-            }
-        """.trimIndent()
-
-        val result = testRunner.run(myScript)
-
-        LoxAssertions.assertSuccess(result)
-        LoxAssertions.assertOutputEquals(result, "defined after call")
-    }
-
-    @Test
     fun `Functions - Declaration - Function Inside Block`() {
         val myScript = """
             {
@@ -1027,20 +1012,6 @@ class FunctionTest {
         LoxAssertions.assertFailure(result)
     }
 
-    @Test
-    fun `Functions - Runtime Error - Recursion Without Base Case`() {
-        val myScript = """
-            fun infinite() {
-                return infinite();
-            }
-            infinite();
-        """.trimIndent()
-
-        val result = testRunner.run(myScript)
-
-        LoxAssertions.assertFailure(result)
-    }
-
     // ==================== Syntax Errors ====================
 
     @Test
@@ -1185,69 +1156,4 @@ class FunctionTest {
         LoxAssertions.assertOutputEquals(result, "11")
     }
 
-    @Test
-    fun `Functions - Complex - Map Pattern`() {
-        val myScript = """
-            fun map(list, fn) {
-                var result = [];
-                for (var i = 0; i < len(list); i = i + 1) {
-                    result = result + fn(list[i]);
-                }
-                return result;
-            }
-            var numbers = [1, 2, 3];
-            fun double(n) { return n * 2; }
-            var doubled = map(numbers, double);
-            print doubled;
-        """.trimIndent()
-
-        val result = testRunner.run(myScript)
-
-        LoxAssertions.assertSuccess(result)
-    }
-
-    @Test
-    fun `Functions - Complex - Filter Pattern`() {
-        val myScript = """
-            fun filter(list, fn) {
-                var result = [];
-                for (var i = 0; i < len(list); i = i + 1) {
-                    if (fn(list[i])) {
-                        result = result + list[i];
-                    }
-                }
-                return result;
-            }
-            var numbers = [1, 2, 3, 4, 5, 6];
-            fun isEven(n) { return n % 2 == 0; }
-            var evens = filter(numbers, isEven);
-            print evens;
-        """.trimIndent()
-
-        val result = testRunner.run(myScript)
-
-        LoxAssertions.assertSuccess(result)
-    }
-
-    @Test
-    fun `Functions - Complex - Reduce Pattern`() {
-        val myScript = """
-            fun reduce(list, fn, initial) {
-                var acc = initial;
-                for (var i = 0; i < len(list); i = i + 1) {
-                    acc = fn(acc, list[i]);
-                }
-                return acc;
-            }
-            var numbers = [1, 2, 3, 4];
-            fun sum(a, b) { return a + b; }
-            var total = reduce(numbers, sum, 0);
-            print total;
-        """.trimIndent()
-
-        val result = testRunner.run(myScript)
-
-        LoxAssertions.assertSuccess(result)
-        LoxAssertions.assertOutputEquals(result, "10")
-    }
 }

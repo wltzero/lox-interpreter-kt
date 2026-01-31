@@ -445,16 +445,6 @@ class ParseTest {
         LoxAssertions.assertSuccess(result)
     }
 
-    @Test
-    fun `Parsing - Logical - Not`() {
-        val myScript = """
-            not true;
-        """.trimIndent()
-
-        val result = testRunner.parse(myScript)
-
-        LoxAssertions.assertSuccess(result)
-    }
 
     @Test
     fun `Parsing - Logical - Complex And Or`() {

@@ -235,7 +235,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
         return if (distance != null) {
             GlobalEnvironment.getAt(distance, exp.identifier).value
         } else {
-            GlobalEnvironment.getGlobal(exp.identifier).value
+            GlobalEnvironment.get(exp.identifier).value
         }
     }
 
@@ -245,7 +245,7 @@ object EvaluateVisitor : ASTNode.Expr.ExprVisitor<LiteralValue> {
         if (distance != null) {
             GlobalEnvironment.assignAt(distance, exp.name, value)
         } else {
-            GlobalEnvironment.assignGlobal(exp.name, value)
+            GlobalEnvironment.assign(exp.name, value)
         }
         return value
     }
